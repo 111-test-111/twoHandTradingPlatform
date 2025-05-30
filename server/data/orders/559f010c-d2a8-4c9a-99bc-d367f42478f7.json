@@ -1,0 +1,26 @@
+{
+  "id": "559f010c-d2a8-4c9a-99bc-d367f42478f7",
+  "productId": "688124d4-1a46-4f94-a4a2-1cb49d8c4c07",
+  "sellerId": "d2ce7bcf-b78c-4694-8877-7689390729b7",
+  "buyerId": "2d4a13e3-427e-4645-b7f6-5a7766bb33f3",
+  "productTitle": "修勾",
+  "productPrice": 9999,
+  "productImages": [
+    "/uploads/products/b5a9816f-87b8-47e4-ae9a-3f8355d7cc5b.jpg",
+    "/uploads/products/692492e0-e7ce-4925-b592-44cf96ab386e.jpg",
+    "/uploads/products/c004f6cb-067d-41c8-9578-bb8780175672.jpg"
+  ],
+  "tradeMethod": [
+    "面交"
+  ],
+  "tradeLocation": "",
+  "contactInfo": "",
+  "message": "我想购买这个商品",
+  "status": "pending",
+  "paymentStatus": "unpaid",
+  "acceptedAt": null,
+  "completedAt": null,
+  "cancelledAt": null,
+  "createdAt": "2025-05-30T13:46:42.367Z",
+  "updatedAt": "2025-05-30T13:46:42.367Z"
+}

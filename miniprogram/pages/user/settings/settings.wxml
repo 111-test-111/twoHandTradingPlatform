@@ -1,0 +1,112 @@
+<view class="container">
+  <!-- 头部用户信息区域 -->
+  <view class="user-header">
+    <view wx:if="{{isLogin}}" class="user-info">
+      <!-- 用户头像 -->
+      <view class="avatar-container" bindtap="updateAvatar">
+        <image 
+          class="avatar" 
+          src="{{avatarUrl || '/assets/images/placeholder.png'}}" 
+          mode="aspectFill"
+        />
+        <view class="avatar-edit-icon">
+          <text class="icon-camera">📷</text>
+        </view>
+      </view>
+      
+      <!-- 用户基本信息 -->
+      <view class="user-details">
+        <view class="nickname">{{nickName || '用户'}}</view>
+        <view class="user-location">
+          <text class="location-icon">📍</text>
+          <text class="location-text">{{city || province || country || '未设置地区'}}</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 未登录状态 -->
+    <view wx:else class="login-prompt">
+      <image class="login-avatar" src="/assets/images/placeholder.png" mode="aspectFill"/>
+      <view class="login-text">点击登录，享受更多服务</view>
+      <button 
+        class="login-btn" 
+        bindtap="wechatLogin" 
+        loading="{{loading}}"
+        disabled="{{loading}}"
+      >
+        {{loading ? '登录中...' : '微信登录'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 个人信息卡片 -->
+  <view wx:if="{{isLogin}}" class="info-card">
+    <view class="card-title">个人信息</view>
+    <view class="info-list">
+      <view class="info-item">
+        <text class="info-label">昵称</text>
+        <text class="info-value">{{nickName || '未设置'}}</text>
+        <text class="arrow">></text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">性别</text>
+        <text class="info-value">{{gender === 1 ? '男' : gender === 2 ? '女' : '未知'}}</text>
+        <text class="arrow">></text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">地区</text>
+        <text class="info-value">{{province || country || '未设置'}}</text>
+        <text class="arrow">></text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 设置选项列表 -->
+  <view class="settings-card">
+    <view class="card-title">设置</view>
+    <view class="settings-list">
+      <!-- 通用设置 -->
+      <view class="setting-item" bindtap="viewUserAgreement">
+        <view class="setting-left">
+          <text class="setting-icon">📄</text>
+          <text class="setting-label">用户协议</text>
+        </view>
+        <text class="arrow">></text>
+      </view>
+      
+      <view class="setting-item" bindtap="viewPrivacyPolicy">
+        <view class="setting-left">
+          <text class="setting-icon">🔒</text>
+          <text class="setting-label">隐私政策</text>
+        </view>
+        <text class="arrow">></text>
+      </view>
+      
+      <view class="setting-item" bindtap="contactService">
+        <view class="setting-left">
+          <text class="setting-icon">📞</text>
+          <text class="setting-label">联系客服</text>
+        </view>
+        <text class="arrow">></text>
+      </view>
+      
+      <view class="setting-item" bindtap="aboutUs">
+        <view class="setting-left">
+          <text class="setting-icon">ℹ️</text>
+          <text class="setting-label">关于我们</text>
+        </view>
+        <text class="arrow">></text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 退出登录按钮 -->
+  <view wx:if="{{isLogin}}" class="logout-section">
+    <button class="logout-btn" bindtap="logout">退出登录</button>
+  </view>
+
+  <!-- 版本信息 -->
+  <!-- <view class="version-info">
+    <text class="version-text">版本号：v1.0.0</text>
+  </view> -->
+</view> 

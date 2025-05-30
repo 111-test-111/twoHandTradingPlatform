@@ -1,0 +1,332 @@
+/* 重构的设置页面样式 */
+.container {
+    min-height: 100vh;
+    width: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+/* 头部用户信息区域 */
+.user-header {
+    padding: 40rpx 0;
+    width: 100%;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.95);
+    // border-radius: 0 0 30rpx 30rpx;
+    padding: 40rpx;
+    box-shadow: 0 15rpx 30rpx rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10rpx);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.avatar-container {
+    position: relative;
+    margin-right: 30rpx;
+}
+
+.avatar {
+    width: 140rpx;
+    height: 140rpx;
+    border-radius: 70rpx;
+    border: 6rpx solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 10rpx 25rpx rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.avatar-edit-icon {
+    position: absolute;
+    bottom: -5rpx;
+    right: -5rpx;
+    width: 44rpx;
+    height: 44rpx;
+    background: #667eea;
+    border-radius: 22rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 5rpx 15rpx rgba(0, 0, 0, 0.25);
+    transition: all 0.3s ease;
+}
+
+.avatar-container:active .avatar {
+    transform: scale(0.98);
+}
+
+.avatar-container:active .avatar-edit-icon {
+    transform: scale(1.1) rotate(15deg);
+}
+
+.icon-camera {
+    font-size: 24rpx;
+    color: white;
+}
+
+.user-details {
+    flex: 1;
+}
+
+.nickname {
+    font-size: 42rpx;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15rpx;
+}
+
+.user-location {
+    display: flex;
+    align-items: center;
+    color: #666;
+    font-size: 28rpx;
+}
+
+.location-icon {
+    margin-right: 10rpx;
+    font-size: 26rpx;
+}
+
+/* 未登录状态 */
+.login-prompt {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 0 0 30rpx 30rpx;
+    padding: 60rpx 40rpx;
+    box-shadow: 0 15rpx 30rpx rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10rpx);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.login-avatar {
+    width: 120rpx;
+    height: 120rpx;
+    border-radius: 60rpx;
+    margin-bottom: 30rpx;
+    opacity: 0.6;
+    box-shadow: 0 10rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.login-text {
+    font-size: 32rpx;
+    color: #666;
+    margin-bottom: 40rpx;
+}
+
+.login-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 50rpx;
+    padding: 25rpx 80rpx;
+    font-size: 30rpx;
+    font-weight: 500;
+    box-shadow: 0 10rpx 25rpx rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+}
+
+.login-btn:active {
+    transform: translateY(3rpx) scale(0.98);
+    box-shadow: 0 5rpx 15rpx rgba(102, 126, 234, 0.3);
+}
+
+/* 信息卡片样式 */
+.info-card,
+.settings-card {
+    margin: 0 0 40rpx 0;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10rpx);
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.card-title {
+    font-size: 34rpx;
+    font-weight: bold;
+    color: #333;
+    padding: 30rpx 40rpx;
+    border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+}
+
+/* 信息列表 */
+.info-list,
+.settings-list {
+    padding: 0 40rpx;
+}
+
+.info-item,
+.setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 40rpx 0;
+    border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.info-item:last-child,
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-item:active {
+    background-color: rgba(102, 126, 234, 0.05);
+    transform: translateX(10rpx);
+}
+
+.info-label {
+    font-size: 30rpx;
+    color: #333;
+    font-weight: 500;
+}
+
+.info-value {
+    font-size: 28rpx;
+    color: #666;
+    flex: 1;
+    text-align: right;
+    margin-right: 20rpx;
+}
+
+.setting-left {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.setting-icon {
+    margin-right: 25rpx;
+    font-size: 38rpx;
+    width: 50rpx;
+    text-align: center;
+}
+
+.setting-label {
+    font-size: 30rpx;
+    color: #333;
+    font-weight: 500;
+}
+
+.arrow {
+    font-size: 26rpx;
+    color: #999;
+    transform: scaleY(1.2);
+    margin-left: 10rpx;
+}
+
+/* 退出登录按钮 */
+.logout-section {
+    width: 100%;
+    padding: 40rpx 40rpx 60rpx;
+    box-sizing: border-box;
+}
+
+.logout-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    color: white;
+    border: none;
+    border-radius: 50rpx;
+    padding: 30rpx 0;
+    font-size: 32rpx;
+    font-weight: 500;
+    box-shadow: 0 10rpx 25rpx rgba(255, 107, 107, 0.3);
+    transition: all 0.3s ease;
+}
+
+.logout-btn:active {
+    transform: translateY(3rpx) scale(0.98);
+    box-shadow: 0 5rpx 15rpx rgba(255, 107, 107, 0.3);
+}
+
+/* 版本信息 */
+.version-info {
+    text-align: center;
+    padding: 30rpx;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.version-text {
+    font-size: 26rpx;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30rpx);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50rpx);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.user-info,
+.login-prompt {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.info-card {
+    animation: fadeIn 0.5s ease-out 0.1s both;
+}
+
+.settings-card {
+    animation: fadeIn 0.5s ease-out 0.2s both;
+}
+
+.logout-section {
+    animation: fadeIn 0.5s ease-out 0.3s both;
+}
+
+.setting-item:nth-child(1) {
+    animation: slideInRight 0.4s ease-out 0.3s both;
+}
+
+.setting-item:nth-child(2) {
+    animation: slideInRight 0.4s ease-out 0.4s both;
+}
+
+.setting-item:nth-child(3) {
+    animation: slideInRight 0.4s ease-out 0.5s both;
+}
+
+.setting-item:nth-child(4) {
+    animation: slideInRight 0.4s ease-out 0.6s both;
+}
+
+/* 响应式设计 */
+@media (max-width: 750rpx) {
+    .user-info {
+        flex-direction: row;
+        text-align: left;
+    }
+
+    .avatar-container {
+        margin-right: 30rpx;
+    }
+}

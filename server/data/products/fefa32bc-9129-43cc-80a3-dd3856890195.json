@@ -1,0 +1,25 @@
+{
+  "id": "fefa32bc-9129-43cc-80a3-dd3856890195",
+  "sellerId": "d2ce7bcf-b78c-4694-8877-7689390729b7",
+  "title": "口红",
+  "description": "口红💄烈焰红唇👄辣🌶",
+  "price": 520,
+  "originalPrice": null,
+  "category": "beauty",
+  "condition": "全新",
+  "images": [
+    "/uploads/products/9f50d54a-7592-4036-8c03-4b7767d7b1c0.png",
+    "/uploads/products/963f5484-8066-4a8f-950c-7adaf0603972.png"
+  ],
+  "campus": "江湾校区",
+  "dormitory": "",
+  "tradeMethods": [
+    "快递"
+  ],
+  "status": "available",
+  "viewCount": 101,
+  "favoriteCount": 0,
+  "tags": [],
+  "createdAt": "2025-05-30T12:40:59.943Z",
+  "updatedAt": "2025-05-30T15:26:22.169Z"
+}

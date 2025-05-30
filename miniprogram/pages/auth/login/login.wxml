@@ -1,0 +1,132 @@
+<view class="container">
+  <!-- 背景装饰 -->
+  <view class="background-decoration">
+    <view class="circle circle-1"></view>
+    <view class="circle circle-2"></view>
+    <view class="circle circle-3"></view>
+  </view>
+
+  <!-- 主要内容 -->
+  <view class="content">
+    
+    <!-- Logo和标题 -->
+    <view class="header">
+      <view class="logo">
+        <image class="logo-image" src="/assets/images/placeholder.png" mode="aspectFit"/>
+      </view>
+      <view class="title">校园二手交易</view>
+      <view class="subtitle">让闲置物品重新焕发价值</view>
+    </view>
+
+    <!-- 登录区域 -->
+    <view class="login-section">
+      
+      <!-- 微信登录按钮 -->
+      <button 
+        class="login-btn wechat-btn {{loading ? 'loading' : ''}}"
+        bindtap="wechatLogin"
+        disabled="{{loading}}"
+      >
+        <view class="btn-content">
+          <text class="wechat-icon">🔑</text>
+          <text class="btn-text">{{loading ? '登录中...' : '微信快速登录'}}</text>
+        </view>
+        <view wx:if="{{loading}}" class="loading-spinner"></view>
+      </button>
+
+      <!-- 其他登录方式 -->
+      <button 
+        class="login-btn demo-btn"
+        disabled="{{loading}}"
+      >
+        <view class="btn-content">
+          <text class="demo-icon">🛠️</text>
+          <text class="btn-text">其他登录方式</text>
+        </view>
+      </button>
+
+      <!-- 访客模式 -->
+      <view class="guest-mode" bindtap="guestMode">
+        <text class="guest-text">暂不登录，随便看看</text>
+      </view>
+    </view>
+
+    <!-- 功能特色 -->
+    <view class="features">
+      <view class="feature-item">
+        <view class="feature-icon">🛒</view>
+        <text class="feature-text">便捷交易</text>
+      </view>
+      <view class="feature-item">
+        <view class="feature-icon">🔒</view>
+        <text class="feature-text">安全可靠</text>
+      </view>
+      <view class="feature-item">
+        <view class="feature-icon">💬</view>
+        <text class="feature-text">实时沟通</text>
+      </view>
+      <view class="feature-item">
+        <view class="feature-icon">🎓</view>
+        <text class="feature-text">校园专属</text>
+      </view>
+    </view>
+
+    <!-- 登录提示 -->
+    <view class="login-tips">
+      <view class="tip-item">
+        <text class="tip-icon">✓</text>
+        <text class="tip-text">登录后可发布和管理商品</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-icon">✓</text>
+        <text class="tip-text">查看完整的交易记录</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-icon">✓</text>
+        <text class="tip-text">享受个性化推荐服务</text>
+      </view>
+    </view>
+
+  </view>
+
+  <!-- 页面底部 -->
+  <view class="footer">
+    <view class="agreement-text">
+      登录即表示同意
+      <text class="link" bindtap="viewUserAgreement">《用户协议》</text>
+      和
+      <text class="link" bindtap="showPrivacy">《隐私政策》</text>
+    </view>
+    
+    <view class="help-text" bindtap="contactService">
+      遇到问题？联系客服
+    </view>
+  </view>
+
+  <!-- 隐私协议弹窗 -->
+  <view wx:if="{{showPrivacyModal}}" class="modal-overlay" bindtap="closePrivacy">
+    <view class="modal-content" catchtap="true">
+      <view class="modal-header">
+        <text class="modal-title">隐私政策</text>
+        <text class="modal-close" bindtap="closePrivacy">✕</text>
+      </view>
+      <view class="modal-body">
+        <text class="privacy-text">
+          我们重视您的隐私保护：
+          
+          1. 信息收集：仅收集必要的用户信息用于提供服务
+          2. 信息使用：不会将您的个人信息提供给第三方
+          3. 信息安全：采用行业标准的安全措施保护您的数据
+          4. 用户权利：您可以随时查看、修改或删除个人信息
+          
+          我们承诺严格保护您的隐私，请放心使用。
+        </text>
+      </view>
+      <view class="modal-footer">
+        <button class="modal-btn cancel-btn" bindtap="closePrivacy">取消</button>
+        <button class="modal-btn confirm-btn" bindtap="agreePrivacyPolicy">同意</button>
+      </view>
+    </view>
+  </view>
+
+</view> 

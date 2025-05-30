@@ -1,0 +1,508 @@
+/**index.scss**/
+page {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+
+/* 搜索头部 */
+.search-header {
+  width: 100%;
+  padding: 30rpx 30rpx 20rpx;
+  box-sizing: border-box;
+}
+
+.search-bar {
+  width: 100%;
+
+  .search-input {
+    display: flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 50rpx;
+    padding: 20rpx 30rpx;
+    box-shadow: 0 6rpx 15rpx rgba(0, 0, 0, 0.15);
+
+    .search-icon {
+      margin-right: 20rpx;
+      font-size: 32rpx;
+    }
+
+    .search-placeholder {
+      color: #999;
+      font-size: 28rpx;
+    }
+  }
+}
+
+/* 分类导航 */
+.category-nav {
+  padding: 10rpx 0 20rpx;
+  width: 100%;
+
+  .category-scroll {
+    padding: 0 30rpx;
+    white-space: nowrap;
+
+    .category-item {
+      display: inline-block;
+      margin-right: 20rpx;
+      padding: 15rpx 30rpx;
+      background-color: rgba(255, 255, 255, 0.3);
+      border-radius: 40rpx;
+      transition: all 0.3s ease;
+
+      &.active {
+        background-color: #fff;
+        box-shadow: 0 6rpx 15rpx rgba(0, 0, 0, 0.15);
+
+        .category-text,
+        .category-count {
+          color: #667eea;
+          font-weight: bold;
+        }
+      }
+
+      .category-text {
+        font-size: 26rpx;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .category-count {
+        font-size: 22rpx;
+        color: rgba(255, 255, 255, 0.7);
+        margin-left: 10rpx;
+      }
+    }
+  }
+}
+
+/* 滚动内容区域 */
+.content-scroll {
+  flex: 1;
+  width: 100%;
+  background: #f5f5f5;
+  border-radius: 40rpx 40rpx 0 0;
+  margin-top: 20rpx;
+}
+
+/* 区块样式 */
+.section {
+  padding: 40rpx 30rpx 0;
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25rpx;
+
+    .section-title {
+      font-size: 34rpx;
+      font-weight: bold;
+      color: #333;
+    }
+  }
+}
+
+/* 热门商品列表 */
+.product-list {
+  .product-card {
+    position: relative;
+    display: flex;
+    background-color: #fff;
+    border-radius: 20rpx;
+    margin-bottom: 25rpx;
+    overflow: hidden;
+    box-shadow: 0 6rpx 15rpx rgba(0, 0, 0, 0.1);
+    animation: fadeInUp 0.5s ease-out both;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform-style: preserve-3d;
+    perspective: 1000rpx;
+    padding: 0;
+    margin-left: 0;
+    margin-right: 0;
+
+    &:active {
+      transform: scale(0.95) rotateX(5deg) rotateY(-5deg);
+      box-shadow: 0 15rpx 35rpx rgba(0, 0, 0, 0.2),
+        inset 0 5rpx 15rpx rgba(0, 0, 0, 0.1);
+      animation: tiltPress 0.3s ease-out forwards;
+    }
+
+    &:active:hover {
+      transform: scale(0.92) rotateX(8deg) rotateY(-8deg);
+    }
+
+    /* 图片绝对定位，充满容器高度 */
+    .card-image {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 250rpx;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 20rpx 0 0 20rpx;
+      z-index: 0;
+    }
+
+    /* 内容区域右移，避开图片 */
+    .card-content {
+      margin-left: 250rpx;
+      flex: 1;
+      padding: 20rpx;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: 0 20rpx 20rpx 0;
+      min-height: 200rpx;
+      box-sizing: border-box;
+
+      .card-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+
+        .card-title {
+          font-size: 30rpx;
+          color: #333;
+          font-weight: bold;
+          margin-bottom: 10rpx;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          line-height: 1.2;
+          height: 36rpx;
+        }
+
+        .card-desc {
+          font-size: 24rpx;
+          color: #666;
+          margin-bottom: 15rpx;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          line-clamp: 2;
+          -webkit-box-orient: vertical;
+          line-height: 1.4;
+          height: 67rpx;
+          box-sizing: border-box;
+        }
+
+        .card-meta {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 15rpx;
+          flex-wrap: wrap;
+          gap: 5rpx;
+          min-height: 32rpx;
+
+          .card-price {
+            font-size: 32rpx;
+            font-weight: bold;
+            color: #ff6b6b;
+            flex-shrink: 0;
+            line-height: 1;
+          }
+
+          .card-campus,
+          .card-views {
+            font-size: 22rpx;
+            color: #999;
+            flex-shrink: 0;
+            line-height: 1;
+          }
+        }
+      }
+
+      .seller-info {
+        display: flex;
+        align-items: center;
+        margin-top: auto;
+        padding-top: 10rpx;
+        border-top: 1rpx solid #f0f0f0;
+        height: 50rpx;
+        box-sizing: border-box;
+
+        .seller-avatar {
+          width: 40rpx;
+          height: 40rpx;
+          border-radius: 50%;
+          margin-right: 10rpx;
+          object-fit: cover;
+          flex-shrink: 0;
+          border: 2rpx solid #f0f0f0;
+          transition: transform 0.2s ease;
+        }
+
+        .seller-name {
+          font-size: 24rpx;
+          color: #666;
+          max-width: 120rpx;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          flex: 1;
+          line-height: 1;
+        }
+      }
+    }
+
+    &:active .seller-avatar {
+      transform: scale(1.1);
+    }
+
+    .product-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: rgba(255, 76, 76, 0.9);
+      color: white;
+      padding: 6rpx 16rpx;
+      font-size: 22rpx;
+      border-radius: 0 20rpx 0 15rpx;
+      z-index: 10;
+      backdrop-filter: blur(5rpx);
+      box-shadow: 0 2rpx 8rpx rgba(255, 76, 76, 0.3);
+    }
+  }
+
+  .product-card.pressed {
+    transform: scale(0.95) rotateX(5deg) rotateY(-5deg);
+    box-shadow: 0 15rpx 35rpx rgba(0, 0, 0, 0.2), inset 0 5rpx 15rpx rgba(0, 0, 0, 0.1);
+    animation: tiltPress 0.3s ease-out forwards;
+  }
+}
+
+/* 加载更多指示器 */
+.load-more-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 0;
+
+  .loading-spinner {
+    width: 40rpx;
+    height: 40rpx;
+    border: 3rpx solid rgba(102, 126, 234, 0.3);
+    border-top: 3rpx solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15rpx;
+  }
+
+  .load-text {
+    font-size: 26rpx;
+    color: #667eea;
+  }
+}
+
+/* 没有更多数据 */
+.no-more-data {
+  text-align: center;
+  padding: 40rpx 0;
+
+  .no-more-text {
+    font-size: 26rpx;
+    color: #ccc;
+  }
+}
+
+/* 空状态 */
+.empty-state {
+  padding: 100rpx 0;
+  text-align: center;
+
+  .empty-icon {
+    font-size: 100rpx;
+    color: #ccc;
+    margin-bottom: 30rpx;
+  }
+
+  .empty-text {
+    font-size: 30rpx;
+    color: #999;
+    margin-bottom: 40rpx;
+  }
+
+  .empty-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 50rpx;
+    padding: 15rpx 60rpx;
+    font-size: 28rpx;
+    display: inline-block;
+  }
+}
+
+/* 初始加载中 */
+.loading-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .loading-spinner {
+    width: 60rpx;
+    height: 60rpx;
+    border: 5rpx solid rgba(102, 126, 234, 0.3);
+    border-top: 5rpx solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  .loading-text {
+    margin-top: 20rpx;
+    font-size: 26rpx;
+    color: #667eea;
+  }
+}
+
+/* 发布按钮 */
+.publish-btn {
+  position: fixed;
+  right: 40rpx;
+  bottom: 80rpx;
+  width: 110rpx;
+  height: 110rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10rpx 30rpx rgba(102, 126, 234, 0.4);
+  z-index: 100;
+  transition: all 0.3s ease;
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  .publish-icon {
+    color: white;
+    font-size: 60rpx;
+    line-height: 1;
+  }
+}
+
+/* 动画效果 */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 375px) {
+  .product-card .card-image {
+    width: 160rpx;
+    height: 160rpx;
+  }
+
+  .product-card .card-content {
+    padding: 15rpx;
+  }
+}
+
+/* 长按倾斜动画 */
+@keyframes tiltPress {
+  0% {
+    transform: scale(1) rotateX(0deg) rotateY(0deg);
+  }
+
+  50% {
+    transform: scale(0.92) rotateX(8deg) rotateY(-8deg);
+  }
+
+  100% {
+    transform: scale(0.95) rotateX(5deg) rotateY(-5deg);
+  }
+}
+
+/* 水波纹点击效果 */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* 图片加载动画 */
+@keyframes imageLoad {
+  0% {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 增强的卡片进入动画 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50rpx) scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 添加水波纹效果的伪元素 */
+.product-list .product-card::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(102, 126, 234, 0.3);
+  transform: translate(-50%, -50%) scale(0);
+  pointer-events: none;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.product-list .product-card:active::before {
+  animation: ripple 0.6s ease-out;
+}
+
+/* 图片加载时的动画 */
+.product-list .card-image {
+  animation: imageLoad 0.5s ease-out;
+}

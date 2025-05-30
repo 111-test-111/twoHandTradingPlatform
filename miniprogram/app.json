@@ -1,0 +1,66 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/product/list/list",
+    "pages/product/detail/detail",
+    "pages/product/publish/publish",
+    "pages/order/list/list",
+    "pages/order/detail/detail",
+    "pages/user/profile/profile",
+    "pages/user/settings/settings",
+    "pages/auth/login/login"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "校园二手交易",
+    "navigationBarBackgroundColor": "#4CAF50",
+    "backgroundColor": "#f5f5f5"
+  },
+  "tabBar": {
+    "color": "#666666",
+    "selectedColor": "#4CAF50",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/product/list/list",
+        "text": "商品"
+      },
+      {
+        "pagePath": "pages/product/publish/publish",
+        "text": "发布"
+      },
+      {
+        "pagePath": "pages/order/list/list",
+        "text": "订单"
+      },
+      {
+        "pagePath": "pages/user/profile/profile",
+        "text": "我的"
+      }
+    ]
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "获取您的位置信息，用于校园内精准推荐"
+    }
+  },
+  "style": "v2",
+  "rendererOptions": {
+    "skyline": {
+      "defaultDisplayBlock": true,
+      "defaultContentBox": true,
+      "tagNameStyleIsolation": "legacy",
+      "disableABTest": true,
+      "sdkVersionBegin": "3.0.0",
+      "sdkVersionEnd": "15.255.255"
+    }
+  },
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

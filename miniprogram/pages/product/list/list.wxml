@@ -1,0 +1,123 @@
+<view class="container">
+  <!-- 头部区域 -->
+  <view class="header-section">
+    <!-- 搜索栏 -->
+    <view class="search-bar" wx:if="{{showSearch}}">
+      <view class="search-input-wrapper">
+        <text class="search-icon">🔍</text>
+        <input class="search-input" 
+               placeholder="搜索商品..." 
+               placeholder-class="search-placeholder"
+               value="{{keyword}}"
+               bindinput="onSearchInput"
+               bindconfirm="onSearchConfirm"/>
+      </view>
+      <button class="search-btn" bindtap="onSearchConfirm">搜索</button>
+    </view>
+
+    <!-- 筛选栏 -->
+    <view class="filter-bar">
+      <view class="filter-item {{currentFilter === 'category' ? 'active' : ''}}" 
+            bindtap="onCategoryFilter">
+        <text class="filter-text">分类</text>
+        <text class="filter-icon">▼</text>
+      </view>
+      <view class="filter-item {{currentFilter === 'price' ? 'active' : ''}}" 
+            bindtap="onPriceFilter">
+        <text class="filter-text">价格</text>
+        <text class="filter-icon">▼</text>
+      </view>
+      <view class="filter-item {{currentFilter === 'sort' ? 'active' : ''}}" 
+            bindtap="onSortFilter">
+        <text class="filter-text">排序</text>
+        <text class="filter-icon">▼</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 商品列表容器 -->
+  <scroll-view class="content-scroll" 
+               scroll-y="true" 
+               enhanced="true"
+               refresher-enabled="true"
+               refresher-triggered="{{refreshing}}"
+               bindrefresherrefresh="onRefresh"
+               bindscrolltolower="onReachBottom">
+    
+    <!-- 商品列表 -->
+    <view class="product-list" wx:if="{{products.length > 0}}">
+      <view class="product-card {{pressedIndex == index ? 'pressed' : ''}}" 
+            wx:for="{{products}}" 
+            wx:key="id"
+            bindtap="onProductTap"
+            bindlongpress="onProductLongPress"
+            bindtouchstart="onProductTouchStart"
+            bindtouchend="onProductTouchEnd"
+            data-id="{{item.id}}"
+            data-index="{{index}}"
+            style="animation-delay: {{index * 0.05}}s">
+        
+        <image class="card-image" 
+               src="{{item.images[0] || '/assets/images/placeholder.png'}}" 
+               mode="aspectFill" 
+               lazy-load="true"></image>
+        
+        <view class="card-content">
+          <view class="card-info">
+            <text class="card-title">{{item.title}}</text>
+            <text class="card-desc">{{item.description || '暂无描述'}}</text>
+            
+            <view class="card-meta">
+              <text class="card-price">¥{{item.price}}</text>
+              <text class="card-campus">{{item.campus}}</text>
+              <text class="card-views">{{item.viewCount || 0}}次浏览</text>
+            </view>
+          </view>
+          
+          <view class="seller-info" wx:if="{{item.seller}}">
+            <image class="seller-avatar" 
+                   src="{{item.seller.avatar || '/assets/images/placeholder.png'}}" 
+                   mode="aspectFill"></image>
+            <text class="seller-name">{{item.seller.nickname || '用户'}}</text>
+          </view>
+        </view>
+        
+        <!-- 商品状态标签 -->
+        <view class="product-badge" wx:if="{{item.status === 'sold'}}">已售出</view>
+        <view class="product-badge condition-badge" wx:if="{{item.condition}}">{{item.condition}}</view>
+      </view>
+    </view>
+
+    <!-- 加载更多指示器 -->
+    <view class="load-more-indicator" wx:if="{{hasMore && products.length > 0}}">
+      <view class="loading-spinner" wx:if="{{loading}}"></view>
+      <text class="load-text">{{loading ? '加载中...' : '上拉加载更多'}}</text>
+    </view>
+
+    <!-- 没有更多数据 -->
+    <view class="no-more-data" wx:if="{{!hasMore && products.length > 0}}">
+      <text class="no-more-text">已经到底了</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!products.length && !loading}}">
+      <view class="empty-icon">📦</view>
+      <text class="empty-text">{{keyword ? '未找到相关商品' : '暂无商品'}}</text>
+      <button class="empty-btn" bindtap="refreshData" wx:if="{{!keyword}}">刷新试试</button>
+      <button class="empty-btn" bindtap="clearSearch" wx:else>清除搜索</button>
+    </view>
+  </scroll-view>
+
+  <!-- 初始加载中 -->
+  <view class="loading-container" wx:if="{{loading && !products.length}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 浮动操作按钮 -->
+  <view class="fab-container">
+    <button class="fab-btn" bindtap="goToPublish">
+      <text class="fab-icon">+</text>
+    </button>
+  </view>
+</view> 
