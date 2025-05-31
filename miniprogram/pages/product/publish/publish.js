@@ -33,6 +33,7 @@ Page({
         selectedCategoryIndex: -1,
         selectedConditionIndex: -1,
         selectedCampusIndex: -1,
+        selectedTradeMethodIndex: -1,
         // 表单错误
         errors: {},
         // 状态标记
@@ -72,6 +73,10 @@ Page({
                     tradeMethods = tradeMethods.split(',');
                 }
 
+                // 找到交易方式索引（取第一个）
+                const tradeMethodIndex = tradeMethods.length > 0 ?
+                    this.data.tradeMethodOptions.indexOf(tradeMethods[0]) : -1;
+
                 this.setData({
                     'formData.title': product.title,
                     'formData.price': product.price.toString(),
@@ -83,7 +88,8 @@ Page({
                     'formData.tradeMethods': tradeMethods,
                     selectedCategoryIndex: categoryIndex !== -1 ? categoryIndex : -1,
                     selectedConditionIndex: conditionIndex !== -1 ? conditionIndex : -1,
-                    selectedCampusIndex: campusIndex !== -1 ? campusIndex : -1
+                    selectedCampusIndex: campusIndex !== -1 ? campusIndex : -1,
+                    selectedTradeMethodIndex: tradeMethodIndex
                 });
             }
         } catch (error) {
@@ -146,30 +152,13 @@ Page({
         });
     },
 
-    toggleTradeMethod(e) {
-        const method = e.currentTarget.dataset.method;
-        const tradeMethods = [...this.data.formData.tradeMethods];
-
-        const index = tradeMethods.indexOf(method);
-        if (index === -1) {
-            tradeMethods.push(method);
-        } else {
-            tradeMethods.splice(index, 1);
-        }
-
-        console.log('切换交易方式:', method, '当前选中:', tradeMethods);
-
+    onTradeMethodChange(e) {
+        const index = parseInt(e.detail.value);
         this.setData({
-            'formData.tradeMethods': tradeMethods,
+            selectedTradeMethodIndex: index,
+            'formData.tradeMethods': [this.data.tradeMethodOptions[index]],
             'errors.tradeMethods': ''
         });
-
-        // 强制更新UI，确保高亮效果显示
-        setTimeout(() => {
-            this.setData({
-                forceUpdateUI: Date.now()
-            });
-        }, 50);
     },
 
     // 图片处理

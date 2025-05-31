@@ -8,7 +8,9 @@
     "pages/order/detail/detail",
     "pages/user/profile/profile",
     "pages/user/settings/settings",
-    "pages/auth/login/login"
+    "pages/auth/login/login",
+    "pages/message/chat/chat",
+    "pages/message/list/list"
   ],
   "window": {
     "navigationBarTextStyle": "black",

@@ -40,7 +40,12 @@ Page({
         recentOrders: [],
 
         // UI状态
-        refreshing: false
+        refreshing: false,
+
+        // 缓存控制
+        lastFromPage: '', // 记录上一个页面路径
+        dataLoadedAt: 0,  // 数据加载时间戳
+        cacheExpireTime: 5 * 60 * 1000 // 缓存5分钟过期
     },
 
     onLoad() {
@@ -49,8 +54,52 @@ Page({
     },
 
     onShow() {
-        // 页面显示时刷新数据
-        this.checkLoginAndLoadData();
+        // 智能刷新逻辑
+        const pages = getCurrentPages();
+        const currentPage = pages[pages.length - 1];
+        const prevPage = pages.length > 1 ? pages[pages.length - 2] : null;
+
+        let shouldRefresh = false;
+
+        // 判断是否需要刷新数据
+        if (!this.data.dataLoadedAt) {
+            // 首次进入，必须加载
+            shouldRefresh = true;
+            console.log('首次进入，需要加载数据');
+        } else if (Date.now() - this.data.dataLoadedAt > this.data.cacheExpireTime) {
+            // 缓存过期，需要刷新
+            shouldRefresh = true;
+            console.log('缓存过期，需要刷新数据');
+        } else if (prevPage) {
+            const fromPagePath = prevPage.route;
+
+            // 从商品详情页返回，不刷新（利用缓存）
+            if (fromPagePath.includes('product/detail')) {
+                shouldRefresh = false;
+                console.log('从商品详情页返回，使用缓存数据');
+            }
+            // 从发布页面返回，需要刷新（可能有新商品）
+            else if (fromPagePath.includes('product/publish')) {
+                shouldRefresh = true;
+                console.log('从发布页面返回，需要刷新数据');
+            }
+            // 从其他页面进入，检查是否是同一个tab切换
+            else if (fromPagePath !== this.data.lastFromPage) {
+                shouldRefresh = true;
+                console.log('从其他页面进入，需要刷新数据');
+            }
+
+            // 记录当前来源页面
+            this.setData({
+                lastFromPage: fromPagePath
+            });
+        }
+
+        if (shouldRefresh) {
+            this.checkLoginAndLoadData();
+        } else {
+            console.log('使用缓存数据，不重新加载');
+        }
     },
 
     // 下拉刷新
@@ -122,7 +171,10 @@ Page({
                 icon: 'none'
             });
         } finally {
-            this.setData({ loading: false });
+            this.setData({
+                loading: false,
+                dataLoadedAt: Date.now() // 更新数据加载时间戳
+            });
             wx.stopPullDownRefresh();
         }
     },
@@ -149,12 +201,10 @@ Page({
             this.setData({ productLoading: true });
 
             const page = reset ? 1 : this.data.productPage;
-            const status = this.data.activeTab === 'published' ? 'available' : undefined;
-
+            // 发布列表不再过滤状态，显示所有商品
             const res = await ProductAPI.getMyProducts({
                 page: page,
-                limit: 10,
-                status: status
+                limit: 10
             });
 
             if (res.success) {
@@ -230,6 +280,8 @@ Page({
     // 刷新数据
     async refreshData() {
         this.setData({ refreshing: true });
+        // 手动刷新时强制重新加载，重置时间戳
+        this.setData({ dataLoadedAt: 0 });
         await this.loadUserData();
         this.setData({ refreshing: false });
     },
@@ -370,8 +422,21 @@ Page({
         }
 
         console.log('跳转到发布商品页面');
-        wx.navigateTo({
+        // 由于发布页面为 tabBar，需要使用 switchTab
+        wx.switchTab({
             url: '/pages/product/publish/publish'
+        });
+    },
+
+    // 查看消息
+    viewMessages() {
+        if (!this.data.isLogin) {
+            this.goToLogin();
+            return;
+        }
+
+        wx.navigateTo({
+            url: '/pages/message/list/list'
         });
     },
 

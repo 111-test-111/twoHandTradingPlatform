@@ -153,22 +153,18 @@
 
         <view class="input-item">
           <text class="input-label">交易方式</text>
-          <view class="checkbox-group {{errors.tradeMethods ? 'checkbox-error' : ''}}">
-            <view 
-              wx:for="{{tradeMethodOptions}}" 
-              wx:key="index" 
-              class="checkbox-item {{formData.tradeMethods.includes(item) ? 'checkbox-selected' : ''}}"
-              hover-class="checkbox-hover"
-              bindtap="toggleTradeMethod"
-              data-method="{{item}}"
-              data-force-update="{{forceUpdateUI}}"
-            >
-              <view class="checkbox-content">
-                <text>{{item}}</text>
-                <text wx:if="{{formData.tradeMethods.includes(item)}}" class="checkbox-icon">✓</text>
-              </view>
+          <picker 
+            mode="selector" 
+            range="{{tradeMethodOptions}}" 
+            value="{{selectedTradeMethodIndex}}"
+            bindchange="onTradeMethodChange"
+            class="{{errors.tradeMethods ? 'picker-error' : ''}}"
+          >
+            <view class="picker-view">
+              <text>{{selectedTradeMethodIndex >= 0 ? tradeMethodOptions[selectedTradeMethodIndex] : '请选择交易方式'}}</text>
+              <text class="picker-arrow">▼</text>
             </view>
-          </view>
+          </picker>
           <text wx:if="{{errors.tradeMethods}}" class="error-message">{{errors.tradeMethods}}</text>
         </view>
       </view>

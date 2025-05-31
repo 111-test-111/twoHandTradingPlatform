@@ -399,10 +399,48 @@ const UserAPI = {
     }
 };
 
+const MessageAPI = {
+    // 创建或获取对话
+    createOrGetConversation(data) {
+        return apiService.post('/message/conversation', data);
+    },
+
+    // 获取对话信息
+    getConversation(conversationId) {
+        return apiService.get(`/message/conversation/${conversationId}`);
+    },
+
+    // 获取会话列表
+    getConversations(params) {
+        return apiService.get('/message/conversations', params);
+    },
+
+    // 获取消息列表
+    getMessages(conversationId, params) {
+        return apiService.get(`/message/conversation/${conversationId}/messages`, params);
+    },
+
+    // 发送消息
+    sendMessage(data) {
+        return apiService.post('/message/send', data);
+    },
+
+    // 删除会话
+    deleteConversation(conversationId) {
+        return apiService.delete(`/message/conversation/${conversationId}`);
+    },
+
+    // 标记消息为已读
+    markAsRead(conversationId) {
+        return apiService.put(`/message/conversation/${conversationId}/read`);
+    }
+};
+
 module.exports = {
     apiService,
     AuthAPI,
     ProductAPI,
     OrderAPI,
-    UserAPI
+    UserAPI,
+    MessageAPI
 }; 

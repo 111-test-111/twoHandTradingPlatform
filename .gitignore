@@ -40,4 +40,10 @@ miniprogram/sitemap.json
 
 # 临时文件
 *.tmp
-*.temp 
+*.temp
+
+# 其他
+TODO
+
+# 本地测试数据
+server/data/

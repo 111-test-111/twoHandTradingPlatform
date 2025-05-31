@@ -50,13 +50,13 @@
 
 /* 用户信息头部 */
 .user-header {
-    padding: 40rpx 0 20rpx;
+    padding: 0 0 20rpx;
     width: 100%;
 }
 
 .user-card {
     background: rgba(255, 255, 255, 0.95);
-    // border-radius: 0 0 30rpx 30rpx;
+    border-radius: 0 0 30rpx 30rpx;
     padding: 50rpx 40rpx;
     box-shadow: 0 15rpx 30rpx rgba(0, 0, 0, 0.15);
     backdrop-filter: blur(10rpx);

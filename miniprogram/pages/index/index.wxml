@@ -42,6 +42,7 @@
               bindlongpress="onProductLongPress"
               bindtouchstart="onProductTouchStart"
               bindtouchend="onProductTouchEnd"
+              bindtouchcancel="onProductTouchEnd"
               data-id="{{item.id}}"
               data-index="{{index}}"
               style="animation-delay: {{index * 0.05}}s">
@@ -66,7 +67,7 @@
       </view>
 
       <!-- 加载更多指示器 -->
-      <view class="load-more-indicator" wx:if="{{hasMore}}">
+      <view class="load-more-indicator" wx:if="{{hasMore && popularProducts.length > 0}}">
         <view class="loading-spinner" wx:if="{{loading}}"></view>
         <text class="load-text">{{loading ? '加载中...' : '上拉加载更多'}}</text>
       </view>
@@ -86,7 +87,7 @@
   </scroll-view>
 
   <!-- 初始加载中 -->
-  <view class="loading-container" wx:if="{{loading && !popularProducts.length}}">
+  <view class="loading-container" wx:if="{{loading && popularProducts.length === 0}}">
     <view class="loading-spinner"></view>
     <text class="loading-text">加载中...</text>
   </view>

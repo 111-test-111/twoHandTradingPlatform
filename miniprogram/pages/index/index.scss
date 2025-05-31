@@ -134,14 +134,9 @@ page {
     margin-right: 0;
 
     &:active {
-      transform: scale(0.95) rotateX(5deg) rotateY(-5deg);
-      box-shadow: 0 15rpx 35rpx rgba(0, 0, 0, 0.2),
-        inset 0 5rpx 15rpx rgba(0, 0, 0, 0.1);
-      animation: tiltPress 0.3s ease-out forwards;
-    }
-
-    &:active:hover {
-      transform: scale(0.92) rotateX(8deg) rotateY(-8deg);
+      transform: scale(0.98);
+      box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.12);
+      transition: all 0.15s ease;
     }
 
     /* 图片绝对定位，充满容器高度 */
@@ -262,10 +257,6 @@ page {
       }
     }
 
-    &:active .seller-avatar {
-      transform: scale(1.1);
-    }
-
     .product-badge {
       position: absolute;
       top: 0;
@@ -282,9 +273,23 @@ page {
   }
 
   .product-card.pressed {
-    transform: scale(0.95) rotateX(5deg) rotateY(-5deg);
-    box-shadow: 0 15rpx 35rpx rgba(0, 0, 0, 0.2), inset 0 5rpx 15rpx rgba(0, 0, 0, 0.1);
-    animation: tiltPress 0.3s ease-out forwards;
+    transform: scale(0.96);
+    box-shadow: 0 5rpx 20rpx rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease-out;
+    filter: brightness(0.95);
+
+    .card-image {
+      opacity: 0.9;
+    }
+
+    .card-content {
+      background: rgba(102, 126, 234, 0.02);
+    }
+
+    /* 长按时头像放大效果 */
+    .seller-avatar {
+      transform: scale(1.1);
+    }
   }
 }
 
@@ -425,21 +430,6 @@ page {
 
   .product-card .card-content {
     padding: 15rpx;
-  }
-}
-
-/* 长按倾斜动画 */
-@keyframes tiltPress {
-  0% {
-    transform: scale(1) rotateX(0deg) rotateY(0deg);
-  }
-
-  50% {
-    transform: scale(0.92) rotateX(8deg) rotateY(-8deg);
-  }
-
-  100% {
-    transform: scale(0.95) rotateX(5deg) rotateY(-5deg);
   }
 }
 

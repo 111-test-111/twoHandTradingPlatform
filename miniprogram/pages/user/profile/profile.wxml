@@ -83,7 +83,7 @@
         <view class="action-icon favorite-icon">❤️</view>
         <text class="action-text">我的收藏</text>
       </view>
-      <view class="action-item">
+      <view class="action-item" bindtap="viewMessages">
         <view class="action-icon message-icon">💬</view>
         <text class="action-text">消息</text>
       </view>

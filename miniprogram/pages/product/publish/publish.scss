@@ -39,7 +39,7 @@
 .form-container {
   width: 100%;
   background: white;
-  // border-radius: 30rpx 30rpx 0 0;
+  border-radius: 30rpx 30rpx 0 0;
   padding-bottom: 180rpx;
   animation: slideUp 0.5s ease-out;
 }
@@ -236,7 +236,7 @@
   border: 2rpx solid #ff6b6b;
 }
 
-/* 复选框样式 */
+/* 单选按钮样式（交易方式） */
 .checkbox-group {
   display: flex;
   flex-wrap: wrap;

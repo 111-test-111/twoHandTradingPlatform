@@ -9,7 +9,11 @@ Page({
         hasMore: true,
         currentPage: 1,
         pageSize: 10,
-        pressedIndex: -1
+        pressedIndex: -1,
+        // 缓存控制
+        lastFromPage: '',
+        dataLoadedAt: 0,
+        cacheExpireTime: 5 * 60 * 1000 // 缓存5分钟过期
     },
 
     onLoad() {
@@ -17,8 +21,27 @@ Page({
     },
 
     onShow() {
-        // 每次显示页面时刷新数据
-        this.refreshData();
+        // 首页智能刷新逻辑
+        const pages = getCurrentPages();
+        const prev = pages.length > 1 ? pages[pages.length - 2] : null;
+        let shouldRefresh = false;
+        if (!this.data.dataLoadedAt) {
+            shouldRefresh = true;
+        } else if (Date.now() - this.data.dataLoadedAt > this.data.cacheExpireTime) {
+            shouldRefresh = true;
+        } else if (prev) {
+            const from = prev.route;
+            // 从详情页返回不刷新
+            if (from.includes('pages/product/detail/detail')) {
+                shouldRefresh = false;
+            } else if (from !== this.data.lastFromPage) {
+                shouldRefresh = true;
+            }
+            this.setData({ lastFromPage: from });
+        }
+        if (shouldRefresh) {
+            this.refreshData();
+        }
     },
 
     onPullDownRefresh() {
@@ -86,7 +109,8 @@ Page({
                 icon: 'none'
             });
         } finally {
-            this.setData({ loading: false });
+            // 更新加载状态和缓存时间戳
+            this.setData({ loading: false, dataLoadedAt: Date.now() });
         }
     },
 
@@ -205,51 +229,61 @@ Page({
         });
     },
 
+    // 触摸开始
+    onProductTouchStart(e) {
+        const index = e.currentTarget.dataset.index;
+        this.setData({
+            pressedIndex: index
+        });
+    },
+
+    // 触摸结束
+    onProductTouchEnd(e) {
+        // 如果 ActionSheet 正在显示，不清除按压状态
+        if (this.actionSheetOpen) return;
+        // 延迟清除状态，保持短暂的视觉反馈
+        setTimeout(() => {
+            this.setData({ pressedIndex: -1 });
+        }, 150);
+    },
+
     // 商品长按事件
     onProductLongPress(e) {
         const productId = e.currentTarget.dataset.id;
         const index = e.currentTarget.dataset.index;
-        // 设置按下状态，保持动画
+
+        // 设置长按状态
         this.setData({ pressedIndex: index });
 
         // 触觉反馈
-        wx.vibrateShort({
-            type: 'medium'
-        });
+        wx.vibrateShort({ type: 'heavy' });
 
+        // 标记 ActionSheet 打开
+        this.actionSheetOpen = true;
         // 显示操作菜单
         wx.showActionSheet({
             itemList: ['查看详情', '分享商品', '收藏商品'],
-            // 弹窗关闭后重置按下状态
-            complete: () => this.setData({ pressedIndex: -1 }),
+            complete: () => {
+                // ActionSheet 关闭时，取消标记并清除按压状态
+                this.actionSheetOpen = false;
+                setTimeout(() => {
+                    this.setData({ pressedIndex: -1 });
+                }, 150);
+            },
             success: (res) => {
                 switch (res.tapIndex) {
                     case 0: // 查看详情
-                        wx.navigateTo({
-                            url: `/pages/product/detail/detail?id=${productId}`
-                        });
+                        wx.navigateTo({ url: `/pages/product/detail/detail?id=${productId}` });
                         break;
-                    case 1: // 分享商品
+                    case 1:
                         this.shareProduct(productId);
                         break;
-                    case 2: // 收藏商品
+                    case 2:
                         this.favoriteProduct(productId);
                         break;
                 }
             }
         });
-    },
-
-    // 触摸开始
-    onProductTouchStart(e) {
-        // 这里可以添加触摸开始的处理逻辑
-        console.log('触摸开始');
-    },
-
-    // 触摸结束
-    onProductTouchEnd(e) {
-        // 这里可以添加触摸结束的处理逻辑
-        console.log('触摸结束');
     },
 
     // 分享商品

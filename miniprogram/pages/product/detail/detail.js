@@ -197,19 +197,36 @@ Page({
     onContact() {
         const { product } = this.data;
 
-        // 复制卖家信息到剪贴板
-        const contactInfo = `商品：${product.title}\n卖家：${product.seller?.nickname || '匿名用户'}\n价格：¥${product.price}`;
+        // 检查是否已登录
+        const userInfo = wx.getStorageSync('userInfo');
+        if (!userInfo) {
+            wx.showModal({
+                title: '提示',
+                content: '请先登录后再联系卖家',
+                confirmText: '去登录',
+                success: (res) => {
+                    if (res.confirm) {
+                        wx.navigateTo({
+                            url: '/pages/auth/login/login'
+                        });
+                    }
+                }
+            });
+            return;
+        }
 
-        wx.setClipboardData({
-            data: contactInfo,
-            success: () => {
-                wx.showModal({
-                    title: '联系卖家',
-                    content: '商品信息已复制到剪贴板，请通过其他方式联系卖家',
-                    showCancel: false,
-                    confirmText: '知道了'
-                });
-            }
+        // 检查是否试图联系自己
+        if (userInfo.id === product.sellerId) {
+            wx.showToast({
+                title: '不能联系自己',
+                icon: 'none'
+            });
+            return;
+        }
+
+        // 跳转到聊天页面
+        wx.navigateTo({
+            url: `/pages/message/chat/chat?userId=${product.sellerId}&productId=${product.id}`
         });
     },
 

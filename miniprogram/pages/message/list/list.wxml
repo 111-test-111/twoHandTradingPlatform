@@ -1,0 +1,102 @@
+<view class="container">
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 消息列表 -->
+  <view wx:else class="message-list">
+    <!-- 空状态 -->
+    <view wx:if="{{conversations.length === 0}}" class="empty-state">
+      <view class="empty-icon">💬</view>
+      <text class="empty-title">暂无消息</text>
+      <text class="empty-desc">与其他用户开始聊天后，消息会显示在这里</text>
+    </view>
+
+    <!-- 会话列表 -->
+    <view wx:else class="conversations-container">
+      <view wx:for="{{conversations}}" 
+            wx:key="id" 
+            class="conversation-wrapper">
+        <!-- 左滑操作区域 -->
+        <view class="slide-actions">
+          <view class="action-btn mark-read" 
+                data-id="{{item.id}}" 
+                catchtap="markAsRead">
+            <text class="action-icon">✓</text>
+            <text class="action-text">设为已读</text>
+          </view>
+          <view class="action-btn delete" 
+                data-id="{{item.id}}" 
+                data-name="{{item.otherUser.nickname || '用户'}}"
+                catchtap="confirmDeleteConversation">
+            <text class="action-icon">×</text>
+            <text class="action-text">删除会话</text>
+          </view>
+        </view>
+        
+        <!-- 会话卡片 -->
+        <view class="conversation-card {{item.slideOpen ? 'slide-open' : ''}}"
+              bindtap="openChat"
+              data-conversation="{{item}}"
+              data-index="{{index}}"
+              bindtouchstart="touchStart"
+              bindtouchmove="touchMove"
+              bindtouchend="touchEnd">
+          
+          <!-- 用户头像 -->
+          <image class="user-avatar" 
+                 src="{{item.otherUser.avatar || '/assets/images/placeholder.png'}}" 
+                 mode="aspectFill"/>
+          
+          <!-- 未读消息红点 -->
+          <view wx:if="{{item.unreadCount > 0}}" class="unread-badge">
+            <text class="unread-count">{{item.unreadCount > 99 ? '99+' : item.unreadCount}}</text>
+          </view>
+          
+          <!-- 会话内容 -->
+          <view class="conversation-content">
+            <view class="conversation-header">
+              <text class="user-name">{{item.otherUser.nickname || '未知用户'}}</text>
+              <text class="message-time">{{item.lastMessageTime}}</text>
+            </view>
+            <view class="message-preview">
+              <text class="last-message {{item.unreadCount > 0 ? 'unread' : ''}}">
+                {{item.lastMessage || '[暂无消息]'}}
+              </text>
+            </view>
+            <view wx:if="{{item.productInfo}}" class="product-tag">
+              <text class="product-tag-text">[商品] {{item.productInfo.title}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view wx:if="{{loadingMore}}" class="loading-more">
+      <view class="loading-spinner small"></view>
+      <text class="loading-text">加载更多...</text>
+    </view>
+  </view>
+
+  <!-- 删除确认弹窗 -->
+  <view class="delete-modal {{showDeleteModal ? 'show' : ''}}" bindtap="hideDeleteModal">
+    <view class="modal-content" catchtap="">
+      <view class="modal-header">
+        <text class="modal-title">删除会话</text>
+      </view>
+      
+      <view class="modal-body">
+        <text class="modal-message">确定要删除与"{{deleteTarget.name}}"的会话吗？</text>
+        <text class="modal-note">删除后聊天记录将无法恢复</text>
+      </view>
+      
+      <view class="modal-actions">
+        <button class="modal-btn cancel-btn" bindtap="hideDeleteModal">取消</button>
+        <button class="modal-btn confirm-btn" bindtap="confirmDelete">删除</button>
+      </view>
+    </view>
+  </view>
+</view> 

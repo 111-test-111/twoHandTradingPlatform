@@ -1,0 +1,126 @@
+<view class="chat-container">
+  <!-- 聊天头部信息 -->
+  <view class="chat-header">
+    <view class="other-user-info" bindtap="viewUserProfile">
+      <image class="user-avatar" src="{{otherUser.avatar || '/assets/images/placeholder.png'}}" mode="aspectFill"/>
+      <view class="user-details">
+        <text class="user-name">{{otherUser.nickname || '未知用户'}}</text>
+        <text class="online-status">在线</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 消息列表 -->
+  <scroll-view class="message-list" 
+               scroll-y="true" 
+               scroll-top="{{scrollTop}}"
+               scroll-into-view="{{scrollIntoView}}"
+               enhanced="true"
+               show-scrollbar="false">
+    
+    <!-- 加载历史消息提示 -->
+    <view wx:if="{{hasMoreHistory}}" class="load-more-history" bindtap="loadMoreHistory">
+      <text class="load-text">点击加载更多历史消息</text>
+    </view>
+
+    <!-- 消息项 -->
+    <view wx:for="{{messages}}" wx:key="id" class="message-item" id="msg-{{item.id}}">
+      
+      <!-- 时间分隔线 -->
+      <view wx:if="{{item.showTime}}" class="time-divider">
+        <text class="time-text">{{item.timeStr}}</text>
+      </view>
+
+      <!-- 消息内容 -->
+      <view class="message-wrapper {{item.isOwn ? 'own-message' : 'other-message'}}">
+        
+        <!-- 对方消息 -->
+        <view wx:if="{{!item.isOwn}}" class="message-content-wrapper">
+          <image class="message-avatar" 
+                 src="{{otherUser.avatar || '/assets/images/placeholder.png'}}" 
+                 mode="aspectFill"
+                 bindtap="viewUserProfile"/>
+          <view class="message-bubble other-bubble">
+            <text class="message-text">{{item.content}}</text>
+            <view class="message-meta">
+              <text class="message-time">{{item.time}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 自己的消息 -->
+        <view wx:else class="message-content-wrapper own-wrapper">
+          <view class="message-bubble own-bubble">
+            <text class="message-text">{{item.content}}</text>
+            <view class="message-meta">
+              <text class="message-status">{{item.status === 'sent' ? '已发送' : item.status === 'failed' ? '发送失败' : '发送中'}}</text>
+              <text class="message-time">{{item.time}}</text>
+            </view>
+          </view>
+          <image class="message-avatar" 
+                 src="{{currentUser.avatar || '/assets/images/placeholder.png'}}" 
+                 mode="aspectFill"
+                 bindtap="viewMyProfile"/>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部占位 -->
+    <view class="bottom-placeholder" id="bottom"></view>
+  </scroll-view>
+
+  <!-- 输入区域 -->
+  <view class="input-section">
+    <view class="input-wrapper">
+      <textarea class="message-input" 
+                placeholder="输入消息..." 
+                value="{{inputText}}"
+                bindinput="onInputChange"
+                bindfocus="onInputFocus"
+                bindblur="onInputBlur"
+                focus="{{inputFocus}}"
+                adjust-position="true"
+                auto-height="true"
+                maxlength="500"
+                confirm-type="send"
+                cursor-spacing="10"
+                bindconfirm="sendMessage"/>
+      <button class="send-button {{inputText.trim() ? 'active' : ''}}" 
+              bindtap="sendMessage"
+              disabled="{{!inputText.trim() || sending}}">
+        <text wx:if="{{!sending}}">发送</text>
+        <text wx:else>...</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 用户信息弹窗 -->
+  <view class="user-info-modal {{showUserModal ? 'show' : ''}}" bindtap="hideUserModal">
+    <view class="modal-content" catchtap="">
+      <view class="modal-header">
+        <text class="modal-title">用户信息</text>
+        <text class="close-btn" bindtap="hideUserModal">×</text>
+      </view>
+      
+      <view class="modal-body">
+        <view class="user-profile">
+          <image class="profile-avatar" src="{{selectedUser.avatar || '/assets/images/placeholder.png'}}" mode="aspectFill"/>
+          <view class="profile-info">
+            <text class="profile-name">{{selectedUser.nickname || '未知用户'}}</text>
+            <text class="profile-id">ID: {{selectedUser.id}}</text>
+            <view class="profile-tags">
+              <view wx:if="{{selectedUser.campus}}" class="tag">{{selectedUser.campus}}</view>
+              <view class="tag">信用 {{selectedUser.creditScore || 100}}</view>
+            </view>
+          </view>
+        </view>
+        
+        <view class="modal-actions">
+          <button class="action-btn view-profile-btn" bindtap="goToUserProfile">
+            查看详细资料
+          </button>
+        </view>
+      </view>
+    </view>
+  </view>
+</view> 

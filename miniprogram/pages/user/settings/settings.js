@@ -96,11 +96,19 @@ Page({
 
             // 获取用户信息
             let userInfo = null;
-            if (this.data.canIUseGetUserProfile) {
-                userInfo = await this.getUserProfile();
-            } else {
-                // 兼容旧版本
-                userInfo = await this.getUserInfo();
+            try {
+                if (this.data.canIUseGetUserProfile) {
+                    userInfo = await this.getUserProfile();
+                } else {
+                    // 兼容旧版本
+                    userInfo = await this.getUserInfo();
+                }
+            } catch (userInfoError) {
+                // 针对getUserProfile的特定错误处理
+                if (userInfoError.errMsg && userInfoError.errMsg.includes('getUserProfile:fail can only be invoked by user TAP gesture')) {
+                    throw new Error('请直接点击登录按钮进行登录');
+                }
+                throw userInfoError;
             }
 
             // 调用后端API进行登录
@@ -137,8 +145,21 @@ Page({
 
         } catch (error) {
             console.error('微信登录失败:', error);
+
+            let errorMessage = '登录失败';
+            if (error.message) {
+                if (error.message.includes('用户取消') || error.message.includes('cancel')) {
+                    // 用户取消授权，不显示错误提示
+                    return;
+                } else if (error.message.includes('TAP gesture')) {
+                    errorMessage = '请直接点击登录按钮进行登录';
+                } else {
+                    errorMessage = error.message;
+                }
+            }
+
             wx.showToast({
-                title: error.message || '登录失败',
+                title: errorMessage,
                 icon: 'none'
             });
         } finally {
@@ -315,23 +336,18 @@ Page({
                     // 清除本地数据
                     app.clearUserInfo();
 
-                    // 更新页面状态
-                    this.setData({
-                        isLogin: false,
-                        userInfo: null,
-                        avatarUrl: '',
-                        nickName: '',
-                        gender: 0,
-                        city: '',
-                        province: '',
-                        country: '',
-                        language: ''
-                    });
-
                     wx.showToast({
                         title: '已退出登录',
-                        icon: 'success'
+                        icon: 'success',
+                        duration: 1500
                     });
+
+                    // 延迟跳转到登录页面
+                    setTimeout(() => {
+                        wx.redirectTo({
+                            url: '/pages/auth/login/login'
+                        });
+                    }, 1500);
                 }
             }
         });
