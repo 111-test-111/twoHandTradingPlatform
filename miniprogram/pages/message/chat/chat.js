@@ -1,4 +1,5 @@
 const { MessageAPI, UserAPI } = require('../../../utils/api');
+const config = require('../../../utils/config');
 
 Page({
     data: {
@@ -471,7 +472,7 @@ Page({
                 if (!imageUrl.startsWith('http://tmp/') && !imageUrl.startsWith('wxfile://')) {
                     // 对于相对路径，转换为完整URL
                     console.log('需要转换的相对图片路径:', imageUrl);
-                    const baseUrl = getApp().globalData.baseUrl || 'http://192.168.10.34:3000';
+                    const baseUrl = config.SERVER_BASE_URL;
                     imageUrl = baseUrl + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
                     console.log('转换后的完整图片URL:', imageUrl);
                 }
@@ -484,7 +485,7 @@ Page({
                 if (!audioUrl.startsWith('http://tmp/') && !audioUrl.startsWith('wxfile://')) {
                     // 对于相对路径，转换为完整URL
                     console.log('需要转换的相对语音路径:', audioUrl);
-                    const baseUrl = getApp().globalData.baseUrl || 'http://192.168.10.34:3000';
+                    const baseUrl = config.SERVER_BASE_URL;
                     audioUrl = baseUrl + (audioUrl.startsWith('/') ? audioUrl : '/' + audioUrl);
                     console.log('转换后的完整语音URL:', audioUrl);
                 }
