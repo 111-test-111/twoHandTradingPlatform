@@ -6,6 +6,7 @@ Page({
         categories: [],
         selectedCategory: '',
         loading: false,
+        refreshing: false,
         hasMore: true,
         currentPage: 1,
         pageSize: 10,
@@ -44,20 +45,22 @@ Page({
         }
     },
 
-    onPullDownRefresh() {
-        this.refreshData();
+    // 下拉刷新处理
+    onRefresh() {
+        this.setData({ refreshing: true });
+        this.refreshData().finally(() => {
+            this.setData({ refreshing: false });
+        });
     },
 
     // 刷新数据
-    refreshData() {
+    async refreshData() {
         this.setData({
             popularProducts: [],
             currentPage: 1,
             hasMore: true
         });
-        this.loadData().finally(() => {
-            wx.stopPullDownRefresh();
-        });
+        return this.loadData();
     },
 
     // 加载初始数据

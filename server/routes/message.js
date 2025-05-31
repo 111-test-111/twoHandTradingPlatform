@@ -1,12 +1,80 @@
 const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
+const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
 const { verifyToken } = require('../middleware/auth');
+const config = require('../config');
 
 const router = express.Router();
 
 // 数据存储路径
 const DATA_DIR = path.join(__dirname, '../data/messages');
+
+// 配置聊天图片上传
+const imageStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadDir = path.join(__dirname, '../data/messages/images');
+        // 确保目录存在
+        require('fs-extra').ensureDirSync(uploadDir);
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const ext = path.extname(file.originalname);
+        const filename = uuidv4() + ext;
+        cb(null, filename);
+    }
+});
+
+// 配置语音消息上传
+const voiceStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadDir = path.join(__dirname, '../data/messages/voices');
+        // 确保目录存在
+        require('fs-extra').ensureDirSync(uploadDir);
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const ext = path.extname(file.originalname) || '.mp3'; // 默认使用.mp3扩展名
+        const filename = uuidv4() + ext;
+        cb(null, filename);
+    }
+});
+
+const imageUpload = multer({
+    storage: imageStorage,
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB
+        files: 1 // 一次只能上传一张图片
+    },
+    fileFilter: function (req, file, cb) {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('只能上传图片文件'));
+        }
+    }
+});
+
+const voiceUpload = multer({
+    storage: voiceStorage,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB
+        files: 1 // 一次只能上传一个语音文件
+    },
+    fileFilter: function (req, file, cb) {
+        // 支持常见的音频格式
+        const validMimeTypes = [
+            'audio/mpeg', 'audio/mp3', 'audio/wav',
+            'audio/x-m4a', 'audio/aac', 'audio/ogg'
+        ];
+        if (validMimeTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('只能上传音频文件'));
+        }
+    }
+});
 
 // 确保数据目录存在
 async function ensureDataDir() {
@@ -374,10 +442,17 @@ router.get('/conversation/:conversationId/messages', verifyToken, async (req, re
         const end = start + parseInt(pageSize);
         const paginatedMessages = messages.slice(start, end);
 
+        // 转换相对图片URL为完整服务器URL
+        const records = paginatedMessages.reverse().map(msg => {
+            if (msg.imageUrl && msg.imageUrl.startsWith('/')) {
+                msg.imageUrl = config.serverUrl + msg.imageUrl;
+            }
+            return msg;
+        });
         res.json({
             success: true,
             data: {
-                records: paginatedMessages.reverse(), // 返回时正序排列
+                records,
                 pagination: {
                     currentPage: parseInt(page),
                     pageSize: parseInt(pageSize),
@@ -402,14 +477,39 @@ router.get('/conversation/:conversationId/messages', verifyToken, async (req, re
  */
 router.post('/send', verifyToken, async (req, res) => {
     try {
-        const { conversationId, content, receiverId } = req.body;
+        const { conversationId, content, receiverId, type, imageUrl, audioUrl, audioDuration } = req.body;
         const senderId = req.user.id;
 
-        if (!conversationId || !content || !receiverId) {
+        if (!conversationId || !receiverId) {
             return res.status(400).json({
                 success: false,
                 message: '缺少必要参数'
             });
+        }
+
+        // 根据消息类型验证必要字段
+        if (type === 'image') {
+            if (!imageUrl) {
+                return res.status(400).json({
+                    success: false,
+                    message: '图片消息缺少图片URL'
+                });
+            }
+        } else if (type === 'audio') {
+            if (!audioUrl) {
+                return res.status(400).json({
+                    success: false,
+                    message: '语音消息缺少语音URL'
+                });
+            }
+        } else {
+            // 文本消息需要content
+            if (!content) {
+                return res.status(400).json({
+                    success: false,
+                    message: '文本消息缺少内容'
+                });
+            }
         }
 
         // 创建消息
@@ -418,7 +518,11 @@ router.post('/send', verifyToken, async (req, res) => {
             conversationId,
             senderId,
             receiverId,
-            content: content.trim(),
+            type: type || 'text', // 消息类型：text、image、audio
+            content: content ? content.trim() : '',
+            imageUrl: imageUrl || null, // 图片URL
+            audioUrl: audioUrl || null, // 音频URL
+            audioDuration: audioDuration || null, // 语音时长
             createdAt: new Date().toISOString(),
             status: 'sent'
         };
@@ -443,10 +547,21 @@ router.post('/send', verifyToken, async (req, res) => {
             const conversationData = await fs.readFile(conversationFile, 'utf8');
             const conversation = JSON.parse(conversationData);
 
+            // 设置最后消息的显示内容
+            let lastMessageContent;
+            if (type === 'image') {
+                lastMessageContent = '[图片]';
+            } else if (type === 'audio') {
+                lastMessageContent = '[语音]';
+            } else {
+                lastMessageContent = content;
+            }
+
             conversation.lastMessage = {
-                content: content,
+                content: lastMessageContent,
                 senderId: senderId,
-                createdAt: message.createdAt
+                createdAt: message.createdAt,
+                type: message.type
             };
             conversation.lastMessageTime = message.createdAt;
 
@@ -651,6 +766,94 @@ router.put('/conversation/:conversationId/read', verifyToken, async (req, res) =
         res.status(500).json({
             success: false,
             message: '标记为已读失败'
+        });
+    }
+});
+
+/**
+ * 上传聊天图片
+ * POST /api/message/upload-image
+ */
+router.post('/upload-image', verifyToken, imageUpload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: '没有上传图片'
+            });
+        }
+
+        // 返回完整的服务器URL
+        const imageUrl = config.serverUrl + '/messages/images/' + req.file.filename;
+
+        console.log('聊天图片上传成功:', {
+            originalName: req.file.originalname,
+            filename: req.file.filename,
+            path: req.file.path,
+            url: imageUrl
+        });
+
+        res.json({
+            success: true,
+            message: '聊天图片上传成功',
+            data: {
+                url: imageUrl, // 完整服务器URL
+                filename: req.file.filename,
+                originalName: req.file.originalname,
+                size: req.file.size
+            }
+        });
+
+    } catch (error) {
+        console.error('上传聊天图片错误:', error);
+        res.status(500).json({
+            success: false,
+            message: '上传聊天图片失败',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+/**
+ * 上传语音消息
+ * POST /api/message/upload-voice
+ */
+router.post('/upload-voice', verifyToken, voiceUpload.single('voice'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: '没有上传语音'
+            });
+        }
+
+        // 返回完整的服务器URL
+        const audioUrl = config.serverUrl + '/messages/voices/' + req.file.filename;
+
+        console.log('语音消息上传成功:', {
+            originalName: req.file.originalname,
+            filename: req.file.filename,
+            path: req.file.path,
+            url: audioUrl
+        });
+
+        res.json({
+            success: true,
+            message: '语音消息上传成功',
+            data: {
+                url: audioUrl, // 完整服务器URL
+                filename: req.file.filename,
+                originalName: req.file.originalname,
+                size: req.file.size
+            }
+        });
+
+    } catch (error) {
+        console.error('上传语音消息错误:', error);
+        res.status(500).json({
+            success: false,
+            message: '上传语音消息失败',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });

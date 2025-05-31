@@ -6,217 +6,217 @@
   </view>
 
   <!-- 主要内容 -->
-  <view wx:else class="content">
-    
-    <!-- 用户信息头部 -->
-    <view class="user-header">
-      <view wx:if="{{isLogin}}" class="user-card">
-        <!-- 用户头像和基本信息 -->
-        <view class="user-info">
-          <view class="avatar-section" bindtap="previewAvatar">
-            <image 
-              class="avatar" 
-              src="{{userInfo.avatar || '/assets/images/placeholder.png'}}" 
-              mode="aspectFill"
-            />
-            <view wx:if="{{userInfo.isVerified}}" class="verified-badge">
-              <text class="verified-icon">✓</text>
-            </view>
-          </view>
-          
-          <view class="user-details">
-            <view class="user-name">{{userInfo.nickname || '用户'}}</view>
-            <view class="user-tags">
-              <view wx:if="{{userInfo.campus}}" class="tag campus-tag">{{userInfo.campus}}</view>
-              <view class="tag credit-tag">信用 {{stats.user.creditScore || 100}}</view>
-            </view>
-          </view>
-          
-          <view class="settings-btn" bindtap="goToSettings">
-            <text class="settings-icon">⚙️</text>
-          </view>
-        </view>
-
-        <!-- 统计数据 -->
-        <view class="stats-row">
-          <view class="stat-item">
-            <text class="stat-number">{{stats.products.total || 0}}</text>
-            <text class="stat-label">发布</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-number">{{stats.products.sold || 0}}</text>
-            <text class="stat-label">已售</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-number">{{stats.user.buyCount || 0}}</text>
-            <text class="stat-label">已购</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-number">{{stats.products.totalViews || 0}}</text>
-            <text class="stat-label">浏览</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 未登录状态 -->
-      <view wx:else class="login-card">
-        <image class="login-avatar" src="/assets/images/placeholder.png" mode="aspectFill"/>
-        <view class="login-info">
-          <view class="login-title">登录后查看个人资料</view>
-          <view class="login-desc">管理商品、查看订单、享受更多服务</view>
-          <button class="login-btn" bindtap="goToLogin">立即登录</button>
-        </view>
-      </view>
-    </view>
-
-    <!-- 快捷操作 -->
-    <view wx:if="{{isLogin}}" class="quick-actions">
-      <view class="action-item" bindtap="publishProduct">
-        <view class="action-icon publish-icon">📝</view>
-        <text class="action-text">发布商品</text>
-      </view>
-      <view class="action-item" bindtap="viewAllOrders">
-        <view class="action-icon order-icon">📦</view>
-        <text class="action-text">我的订单</text>
-      </view>
-      <view class="action-item">
-        <view class="action-icon favorite-icon">❤️</view>
-        <text class="action-text">我的收藏</text>
-      </view>
-      <view class="action-item" bindtap="viewMessages">
-        <view class="action-icon message-icon">💬</view>
-        <text class="action-text">消息</text>
-      </view>
-    </view>
-
-    <!-- 最近订单 -->
-    <view wx:if="{{isLogin && recentOrders.length > 0}}" class="recent-orders">
-      <view class="section-header">
-        <text class="section-title">最近交易</text>
-        <text class="view-all" bindtap="viewAllOrders">查看全部 ></text>
-      </view>
-      <view class="orders-list">
-        <view 
-          wx:for="{{recentOrders}}" 
-          wx:key="id" 
-          class="order-item"
-          bindtap="viewOrder"
-          data-id="{{item.id}}"
-        >
-          <view class="order-type {{item.type === 'buy' ? 'buy-type' : 'sell-type'}}">
-            {{item.type === 'buy' ? '购买' : '出售'}}
-          </view>
-          <view class="order-info">
-            <text class="order-title">{{item.productTitle || item.title}}</text>
-            <text class="order-price">¥{{item.totalAmount || item.price}}</text>
-          </view>
-          <view class="order-status {{item.status}}">
-            {{item.status === 'pending' ? '待处理' : 
-              item.status === 'completed' ? '已完成' : 
-              item.status === 'cancelled' ? '已取消' : '处理中'}}
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <!-- 我的商品 -->
-    <view wx:if="{{isLogin}}" class="my-products">
-      <view class="section-header">
-        <text class="section-title">我的商品</text>
-      </view>
-      
-      <!-- 标签切换 -->
-      <view class="tabs">
-        <view 
-          class="tab-item {{activeTab === 'published' ? 'active' : ''}}"
-          bindtap="switchTab"
-          data-tab="published"
-        >
-          已发布 ({{stats.products.total || 0}})
-        </view>
-        <view 
-          class="tab-item {{activeTab === 'bought' ? 'active' : ''}}"
-          bindtap="switchTab"
-          data-tab="bought"
-        >
-          已购买
-        </view>
-        <view 
-          class="tab-item {{activeTab === 'favorites' ? 'active' : ''}}"
-          bindtap="switchTab"
-          data-tab="favorites"
-        >
-          收藏夹
-        </view>
-      </view>
-
-      <!-- 商品列表 -->
-      <view class="products-grid">
-        <view wx:if="{{myProducts.length === 0}}" class="empty-state">
-          <view class="empty-icon">📦</view>
-          <text class="empty-text">
-            {{activeTab === 'published' ? '还没有发布商品' :
-              activeTab === 'bought' ? '还没有购买记录' : '还没有收藏商品'}}
-          </text>
-          <button wx:if="{{activeTab === 'published'}}" class="empty-btn" bindtap="publishProduct">
-            发布第一个商品
-          </button>
-        </view>
-
-        <view wx:else class="products-list">
-          <view 
-            wx:for="{{myProducts}}" 
-            wx:key="id" 
-            class="product-card"
-            bindtap="viewProduct"
-            data-id="{{item.id}}"
-          >
-            <view class="product-image-container">
+  <scroll-view wx:else class="content-scroll" scroll-y="true" enhanced="true">
+    <view class="content">
+      <!-- 用户信息头部 -->
+      <view class="user-header">
+        <view wx:if="{{isLogin}}" class="user-card">
+          <!-- 用户头像和基本信息 -->
+          <view class="user-info">
+            <view class="avatar-section" bindtap="previewAvatar">
               <image 
-                class="product-image" 
-                src="{{item.images[0] || '/assets/images/placeholder.png'}}" 
+                class="avatar" 
+                src="{{userInfo.avatar || '/assets/images/placeholder.png'}}" 
                 mode="aspectFill"
-                lazy-load="true"
               />
-              <view wx:if="{{item.status === 'sold'}}" class="sold-mask">
-                <text class="sold-text">已售出</text>
-              </view>
-              <view wx:if="{{activeTab === 'published'}}" class="product-actions">
-                <view 
-                  class="action-btn edit-btn" 
-                  catchtap="editProduct"
-                  data-id="{{item.id}}"
-                >
-                  编辑
-                </view>
-                <view 
-                  class="action-btn delete-btn" 
-                  catchtap="deleteProduct"
-                  data-id="{{item.id}}"
-                  data-title="{{item.title}}"
-                >
-                  删除
-                </view>
+              <view wx:if="{{userInfo.isVerified}}" class="verified-badge">
+                <text class="verified-icon">✓</text>
               </view>
             </view>
             
-            <view class="product-info">
-              <text class="product-title">{{item.title}}</text>
-              <text class="product-price">¥{{item.price}}</text>
-              <view class="product-meta">
-                <text class="product-time">{{item.createdAt}}</text>
-                <text class="product-views">{{item.viewCount || 0}}次浏览</text>
+            <view class="user-details">
+              <view class="user-name">{{userInfo.nickname || '用户'}}</view>
+              <view class="user-tags">
+                <view wx:if="{{userInfo.campus}}" class="tag campus-tag">{{userInfo.campus}}</view>
+                <view class="tag credit-tag">信用 {{stats.user.creditScore || 100}}</view>
               </view>
+            </view>
+            
+            <view class="settings-btn" bindtap="goToSettings">
+              <text class="settings-icon">⚙️</text>
+            </view>
+          </view>
+
+          <!-- 统计数据 -->
+          <view class="stats-row">
+            <view class="stat-item">
+              <text class="stat-number">{{stats.products.total || 0}}</text>
+              <text class="stat-label">发布</text>
+            </view>
+            <view class="stat-item">
+              <text class="stat-number">{{stats.products.sold || 0}}</text>
+              <text class="stat-label">已售</text>
+            </view>
+            <view class="stat-item">
+              <text class="stat-number">{{stats.user.buyCount || 0}}</text>
+              <text class="stat-label">已购</text>
+            </view>
+            <view class="stat-item">
+              <text class="stat-number">{{stats.products.totalViews || 0}}</text>
+              <text class="stat-label">浏览</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 未登录状态 -->
+        <view wx:else class="login-card">
+          <image class="login-avatar" src="/assets/images/placeholder.png" mode="aspectFill"/>
+          <view class="login-info">
+            <view class="login-title">登录后查看个人资料</view>
+            <view class="login-desc">管理商品、查看订单、享受更多服务</view>
+            <button class="login-btn" bindtap="goToLogin">立即登录</button>
+          </view>
+        </view>
+      </view>
+
+      <!-- 快捷操作 -->
+      <view wx:if="{{isLogin}}" class="quick-actions">
+        <view class="action-item" bindtap="publishProduct">
+          <view class="action-icon publish-icon">📝</view>
+          <text class="action-text">发布商品</text>
+        </view>
+        <view class="action-item" bindtap="viewAllOrders">
+          <view class="action-icon order-icon">📦</view>
+          <text class="action-text">我的订单</text>
+        </view>
+        <view class="action-item">
+          <view class="action-icon favorite-icon">❤️</view>
+          <text class="action-text">我的收藏</text>
+        </view>
+        <view class="action-item" bindtap="viewMessages">
+          <view class="action-icon message-icon">💬</view>
+          <text class="action-text">消息</text>
+        </view>
+      </view>
+
+      <!-- 最近订单 -->
+      <view wx:if="{{isLogin && recentOrders.length > 0}}" class="recent-orders">
+        <view class="section-header">
+          <text class="section-title">最近交易</text>
+          <text class="view-all" bindtap="viewAllOrders">查看全部 ></text>
+        </view>
+        <view class="orders-list">
+          <view 
+            wx:for="{{recentOrders}}" 
+            wx:key="id" 
+            class="order-item"
+            bindtap="viewOrder"
+            data-id="{{item.id}}"
+          >
+            <view class="order-type {{item.type === 'buy' ? 'buy-type' : 'sell-type'}}">
+              {{item.type === 'buy' ? '购买' : '出售'}}
+            </view>
+            <view class="order-info">
+              <text class="order-title">{{item.productTitle || item.title}}</text>
+              <text class="order-price">¥{{item.totalAmount || item.price}}</text>
+            </view>
+            <view class="order-status {{item.status}}">
+              {{item.status === 'pending' ? '待处理' : 
+                item.status === 'completed' ? '已完成' : 
+                item.status === 'cancelled' ? '已取消' : '处理中'}}
             </view>
           </view>
         </view>
       </view>
 
-      <!-- 加载更多 -->
-      <view wx:if="{{productLoading}}" class="loading-more">
-        <text>加载中...</text>
+      <!-- 我的商品 -->
+      <view wx:if="{{isLogin}}" class="my-products">
+        <view class="section-header">
+          <text class="section-title">我的商品</text>
+        </view>
+        
+        <!-- 标签切换 -->
+        <view class="tabs">
+          <view 
+            class="tab-item {{activeTab === 'published' ? 'active' : ''}}"
+            bindtap="switchTab"
+            data-tab="published"
+          >
+            已发布 ({{stats.products.total || 0}})
+          </view>
+          <view 
+            class="tab-item {{activeTab === 'bought' ? 'active' : ''}}"
+            bindtap="switchTab"
+            data-tab="bought"
+          >
+            已购买
+          </view>
+          <view 
+            class="tab-item {{activeTab === 'favorites' ? 'active' : ''}}"
+            bindtap="switchTab"
+            data-tab="favorites"
+          >
+            收藏夹
+          </view>
+        </view>
+
+        <!-- 商品列表 -->
+        <view class="products-grid">
+          <view wx:if="{{myProducts.length === 0}}" class="empty-state">
+            <view class="empty-icon">📦</view>
+            <text class="empty-text">
+              {{activeTab === 'published' ? '还没有发布商品' :
+                activeTab === 'bought' ? '还没有购买记录' : '还没有收藏商品'}}
+            </text>
+            <button wx:if="{{activeTab === 'published'}}" class="empty-btn" bindtap="publishProduct">
+              发布第一个商品
+            </button>
+          </view>
+
+          <view wx:else class="products-list">
+            <view 
+              wx:for="{{myProducts}}" 
+              wx:key="id" 
+              class="product-card"
+              bindtap="viewProduct"
+              data-id="{{item.id}}"
+            >
+              <view class="product-image-container">
+                <image 
+                  class="product-image" 
+                  src="{{item.images[0] || '/assets/images/placeholder.png'}}" 
+                  mode="aspectFill"
+                  lazy-load="true"
+                />
+                <view wx:if="{{item.status === 'sold'}}" class="sold-mask">
+                  <text class="sold-text">已售出</text>
+                </view>
+                <view wx:if="{{activeTab === 'published'}}" class="product-actions">
+                  <view 
+                    class="action-btn edit-btn" 
+                    catchtap="editProduct"
+                    data-id="{{item.id}}"
+                  >
+                    编辑
+                  </view>
+                  <view 
+                    class="action-btn delete-btn" 
+                    catchtap="deleteProduct"
+                    data-id="{{item.id}}"
+                    data-title="{{item.title}}"
+                  >
+                    删除
+                  </view>
+                </view>
+              </view>
+              
+              <view class="product-info">
+                <text class="product-title">{{item.title}}</text>
+                <text class="product-price">¥{{item.price}}</text>
+                <view class="product-meta">
+                  <text class="product-time">{{item.createdAt}}</text>
+                  <text class="product-views">{{item.viewCount || 0}}次浏览</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 加载更多 -->
+        <view wx:if="{{productLoading}}" class="loading-more">
+          <text>加载中...</text>
+        </view>
       </view>
     </view>
-
-  </view>
+  </scroll-view>
 </view> 

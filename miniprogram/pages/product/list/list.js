@@ -30,7 +30,7 @@ Page({
     },
 
     onShow() {
-        this.refreshData();
+        // 删除自动刷新
     },
 
     onReachBottom() {

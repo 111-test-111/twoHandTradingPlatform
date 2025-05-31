@@ -28,6 +28,9 @@
   <scroll-view class="content-scroll" 
                scroll-y="true" 
                enhanced="true" 
+               refresher-enabled="true"
+               refresher-triggered="{{refreshing}}"
+               bindrefresherrefresh="onRefresh"
                bindscrolltolower="loadMoreProducts">
     <view class="section popular-section">
       <view class="section-header">

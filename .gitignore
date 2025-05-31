@@ -45,5 +45,5 @@ miniprogram/sitemap.json
 # 其他
 TODO
 
-# 本地测试数据
+# 本地测试数据 server/data/ 下的全部数据不提交
 server/data/

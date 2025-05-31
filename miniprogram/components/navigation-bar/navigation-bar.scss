@@ -1,8 +1,9 @@
 .weui-navigation-bar {
-  --weui-FG-0:rgba(0,0,0,.9);
+  --weui-FG-0: rgba(0, 0, 0, .9);
   --height: 44px;
   --left: 16px;
 }
+
 .weui-navigation-bar .android {
   --height: 48px;
 }
@@ -90,6 +91,7 @@
   from {
     transform: rotate(0);
   }
+
   to {
     transform: rotate(360deg);
   }

@@ -56,10 +56,13 @@
 }
 
 @keyframes float {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0) rotate(0deg);
         opacity: 0.15;
     }
+
     50% {
         transform: translateY(-30rpx) rotate(180deg);
         opacity: 0.25;
@@ -194,6 +197,7 @@
     0% {
         transform: translateY(-50%) rotate(0deg);
     }
+
     100% {
         transform: translateY(-50%) rotate(360deg);
     }
@@ -417,6 +421,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -427,6 +432,7 @@
         opacity: 0;
         transform: translateY(-50rpx);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -438,6 +444,7 @@
         opacity: 0;
         transform: translateY(50rpx);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -449,6 +456,7 @@
         opacity: 0;
         transform: translateY(80rpx);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);

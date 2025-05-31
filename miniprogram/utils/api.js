@@ -425,6 +425,110 @@ const MessageAPI = {
         return apiService.post('/message/send', data);
     },
 
+    // 上传聊天图片
+    uploadImage(filePath) {
+        return new Promise((resolve, reject) => {
+            console.log('开始上传聊天图片:', filePath);
+            console.log('上传URL:', `${API_BASE_URL}/message/upload-image`);
+            console.log('Token:', apiService.getToken());
+
+            wx.uploadFile({
+                url: `${API_BASE_URL}/message/upload-image`,
+                filePath: filePath,
+                name: 'image',
+                header: {
+                    'Authorization': `Bearer ${apiService.getToken()}`
+                },
+                success: (res) => {
+                    console.log('上传响应:', res);
+                    try {
+                        if (res.statusCode === 200) {
+                            const data = JSON.parse(res.data);
+                            console.log('上传成功数据:', data);
+                            resolve(data);
+                        } else {
+                            console.error('上传失败状态码:', res.statusCode);
+                            console.error('上传失败响应:', res.data);
+                            reject({
+                                success: false,
+                                message: `上传失败，状态码：${res.statusCode}`,
+                                statusCode: res.statusCode,
+                                data: res.data
+                            });
+                        }
+                    } catch (error) {
+                        console.error('解析响应数据失败:', error);
+                        reject({
+                            success: false,
+                            message: '服务器响应格式错误',
+                            error: error.message
+                        });
+                    }
+                },
+                fail: (error) => {
+                    console.error('上传请求失败:', error);
+                    reject({
+                        success: false,
+                        message: '网络请求失败',
+                        error: error
+                    });
+                }
+            });
+        });
+    },
+
+    // 上传语音消息
+    uploadVoice(filePath) {
+        return new Promise((resolve, reject) => {
+            console.log('开始上传语音消息:', filePath);
+            console.log('上传URL:', `${API_BASE_URL}/message/upload-voice`);
+            console.log('Token:', apiService.getToken());
+
+            wx.uploadFile({
+                url: `${API_BASE_URL}/message/upload-voice`,
+                filePath: filePath,
+                name: 'voice',
+                header: {
+                    'Authorization': `Bearer ${apiService.getToken()}`
+                },
+                success: (res) => {
+                    console.log('上传响应:', res);
+                    try {
+                        if (res.statusCode === 200) {
+                            const data = JSON.parse(res.data);
+                            console.log('上传成功数据:', data);
+                            resolve(data);
+                        } else {
+                            console.error('上传失败状态码:', res.statusCode);
+                            console.error('上传失败响应:', res.data);
+                            reject({
+                                success: false,
+                                message: `上传失败，状态码：${res.statusCode}`,
+                                statusCode: res.statusCode,
+                                data: res.data
+                            });
+                        }
+                    } catch (error) {
+                        console.error('解析响应数据失败:', error);
+                        reject({
+                            success: false,
+                            message: '服务器响应格式错误',
+                            error: error.message
+                        });
+                    }
+                },
+                fail: (error) => {
+                    console.error('上传请求失败:', error);
+                    reject({
+                        success: false,
+                        message: '网络请求失败',
+                        error: error
+                    });
+                }
+            });
+        });
+    },
+
     // 删除会话
     deleteConversation(conversationId) {
         return apiService.delete(`/message/conversation/${conversationId}`);

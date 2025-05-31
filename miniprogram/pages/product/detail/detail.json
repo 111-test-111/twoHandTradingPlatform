@@ -1,5 +1,7 @@
 {
   "navigationBarTitleText": "商品详情",
   "enableShareTimeline": true,
-  "enableShareAppMessage": true
+  "enableShareAppMessage": true,
+  "navigationBarBackgroundColor": "#667eea",
+  "navigationBarTextStyle": "white"
 }

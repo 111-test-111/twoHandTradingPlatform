@@ -1,8 +1,9 @@
 {
   "navigationBarTitleText": "商品列表",
-  "enablePullDownRefresh": true,
+  "enablePullDownRefresh": false,
   "onReachBottomDistance": 50,
   "enableShareAppMessage": true,
-  "backgroundColor": "#667eea",
+  "navigationBarBackgroundColor": "#667eea",
+  "navigationBarTextStyle": "white",
   "backgroundTextStyle": "light"
 }

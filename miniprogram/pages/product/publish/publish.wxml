@@ -6,184 +6,186 @@
   </view>
 
   <!-- 主要表单区域 -->
-  <view class="form-container">
-    <!-- 图片上传区 -->
-    <view class="form-section">
-      <view class="section-title">
-        <text class="title-text">商品图片</text>
-        <text class="title-tip">最多上传6张</text>
-      </view>
-      <view class="image-uploader">
-        <view class="image-list">
-          <view 
-            class="image-item" 
-            wx:for="{{formData.images}}" 
-            wx:key="index"
-            bindtap="previewImage"
-            data-index="{{index}}"
-          >
-            <image class="uploaded-image" src="{{item}}" mode="aspectFill" />
-            <view class="image-delete" catchtap="deleteImage" data-index="{{index}}">
-              <text class="delete-icon">×</text>
+  <scroll-view class="form-scroll" scroll-y="true" enhanced="true">
+    <view class="form-container">
+      <!-- 图片上传区 -->
+      <view class="form-section">
+        <view class="section-title">
+          <text class="title-text">商品图片</text>
+          <text class="title-tip">最多上传6张</text>
+        </view>
+        <view class="image-uploader">
+          <view class="image-list">
+            <view 
+              class="image-item" 
+              wx:for="{{formData.images}}" 
+              wx:key="index"
+              bindtap="previewImage"
+              data-index="{{index}}"
+            >
+              <image class="uploaded-image" src="{{item}}" mode="aspectFill" />
+              <view class="image-delete" catchtap="deleteImage" data-index="{{index}}">
+                <text class="delete-icon">×</text>
+              </view>
+            </view>
+            <view class="image-item add-image" bindtap="chooseImage" wx:if="{{formData.images.length < 6}}">
+              <text class="add-icon">+</text>
+              <text class="add-text">添加图片</text>
             </view>
           </view>
-          <view class="image-item add-image" bindtap="chooseImage" wx:if="{{formData.images.length < 6}}">
-            <text class="add-icon">+</text>
-            <text class="add-text">添加图片</text>
+        </view>
+      </view>
+
+      <!-- 商品信息区 -->
+      <view class="form-section">
+        <view class="section-title">
+          <text class="title-text">基本信息</text>
+          <text class="required-mark">*</text>
+        </view>
+
+        <view class="input-group">
+          <view class="input-item">
+            <text class="input-label">商品名称</text>
+            <input 
+              class="input-field {{errors.title ? 'input-error' : ''}}" 
+              placeholder="请输入商品名称（最多30字）" 
+              maxlength="30"
+              value="{{formData.title}}"
+              bindinput="onInputTitle"
+            />
+            <text wx:if="{{errors.title}}" class="error-message">{{errors.title}}</text>
+          </view>
+
+          <view class="input-item">
+            <text class="input-label">价格（元）</text>
+            <input 
+              class="input-field {{errors.price ? 'input-error' : ''}}" 
+              type="digit" 
+              placeholder="请输入价格" 
+              value="{{formData.price}}"
+              bindinput="onInputPrice"
+            />
+            <text wx:if="{{errors.price}}" class="error-message">{{errors.price}}</text>
+          </view>
+
+          <view class="input-item">
+            <text class="input-label">商品分类</text>
+            <picker 
+              mode="selector" 
+              range="{{categoryOptions}}" 
+              range-key="name"
+              value="{{selectedCategoryIndex}}"
+              bindchange="onCategoryChange"
+              class="{{errors.category ? 'picker-error' : ''}}"
+            >
+              <view class="picker-view">
+                <text>{{selectedCategoryIndex >= 0 ? categoryOptions[selectedCategoryIndex].name : '请选择分类'}}</text>
+                <text class="picker-arrow">▼</text>
+              </view>
+            </picker>
+            <text wx:if="{{errors.category}}" class="error-message">{{errors.category}}</text>
+          </view>
+
+          <view class="input-item">
+            <text class="input-label">商品成色</text>
+            <picker 
+              mode="selector" 
+              range="{{conditionOptions}}" 
+              value="{{selectedConditionIndex}}"
+              bindchange="onConditionChange"
+              class="{{errors.condition ? 'picker-error' : ''}}"
+            >
+              <view class="picker-view">
+                <text>{{selectedConditionIndex >= 0 ? conditionOptions[selectedConditionIndex] : '请选择成色'}}</text>
+                <text class="picker-arrow">▼</text>
+              </view>
+            </picker>
+            <text wx:if="{{errors.condition}}" class="error-message">{{errors.condition}}</text>
           </view>
         </view>
       </view>
-    </view>
 
-    <!-- 商品信息区 -->
-    <view class="form-section">
-      <view class="section-title">
-        <text class="title-text">基本信息</text>
-        <text class="required-mark">*</text>
-      </view>
-
-      <view class="input-group">
-        <view class="input-item">
-          <text class="input-label">商品名称</text>
-          <input 
-            class="input-field {{errors.title ? 'input-error' : ''}}" 
-            placeholder="请输入商品名称（最多30字）" 
-            maxlength="30"
-            value="{{formData.title}}"
-            bindinput="onInputTitle"
-          />
-          <text wx:if="{{errors.title}}" class="error-message">{{errors.title}}</text>
+      <!-- 商品详情区 -->
+      <view class="form-section">
+        <view class="section-title">
+          <text class="title-text">详细描述</text>
+          <text class="required-mark">*</text>
         </view>
 
-        <view class="input-item">
-          <text class="input-label">价格（元）</text>
-          <input 
-            class="input-field {{errors.price ? 'input-error' : ''}}" 
-            type="digit" 
-            placeholder="请输入价格" 
-            value="{{formData.price}}"
-            bindinput="onInputPrice"
-          />
-          <text wx:if="{{errors.price}}" class="error-message">{{errors.price}}</text>
-        </view>
-
-        <view class="input-item">
-          <text class="input-label">商品分类</text>
-          <picker 
-            mode="selector" 
-            range="{{categoryOptions}}" 
-            range-key="name"
-            value="{{selectedCategoryIndex}}"
-            bindchange="onCategoryChange"
-            class="{{errors.category ? 'picker-error' : ''}}"
-          >
-            <view class="picker-view">
-              <text>{{selectedCategoryIndex >= 0 ? categoryOptions[selectedCategoryIndex].name : '请选择分类'}}</text>
-              <text class="picker-arrow">▼</text>
-            </view>
-          </picker>
-          <text wx:if="{{errors.category}}" class="error-message">{{errors.category}}</text>
-        </view>
-
-        <view class="input-item">
-          <text class="input-label">商品成色</text>
-          <picker 
-            mode="selector" 
-            range="{{conditionOptions}}" 
-            value="{{selectedConditionIndex}}"
-            bindchange="onConditionChange"
-            class="{{errors.condition ? 'picker-error' : ''}}"
-          >
-            <view class="picker-view">
-              <text>{{selectedConditionIndex >= 0 ? conditionOptions[selectedConditionIndex] : '请选择成色'}}</text>
-              <text class="picker-arrow">▼</text>
-            </view>
-          </picker>
-          <text wx:if="{{errors.condition}}" class="error-message">{{errors.condition}}</text>
+        <view class="input-group">
+          <view class="input-item">
+            <textarea 
+              class="textarea-field {{errors.description ? 'input-error' : ''}}" 
+              placeholder="描述一下商品的细节、使用感受等（最少10字）" 
+              maxlength="1000"
+              value="{{formData.description}}"
+              bindinput="onInputDescription"
+            />
+            <view class="textarea-counter">{{formData.description.length}}/1000</view>
+            <text wx:if="{{errors.description}}" class="error-message">{{errors.description}}</text>
+          </view>
         </view>
       </view>
-    </view>
 
-    <!-- 商品详情区 -->
-    <view class="form-section">
-      <view class="section-title">
-        <text class="title-text">详细描述</text>
-        <text class="required-mark">*</text>
+      <!-- 交易信息区 -->
+      <view class="form-section">
+        <view class="section-title">
+          <text class="title-text">交易信息</text>
+          <text class="required-mark">*</text>
+        </view>
+
+        <view class="input-group">
+          <view class="input-item">
+            <text class="input-label">校区</text>
+            <picker 
+              mode="selector" 
+              range="{{campusOptions}}" 
+              value="{{selectedCampusIndex}}"
+              bindchange="onCampusChange"
+              class="{{errors.campus ? 'picker-error' : ''}}"
+            >
+              <view class="picker-view">
+                <text>{{selectedCampusIndex >= 0 ? campusOptions[selectedCampusIndex] : '请选择校区'}}</text>
+                <text class="picker-arrow">▼</text>
+              </view>
+            </picker>
+            <text wx:if="{{errors.campus}}" class="error-message">{{errors.campus}}</text>
+          </view>
+
+          <view class="input-item">
+            <text class="input-label">交易方式</text>
+            <picker 
+              mode="selector" 
+              range="{{tradeMethodOptions}}" 
+              value="{{selectedTradeMethodIndex}}"
+              bindchange="onTradeMethodChange"
+              class="{{errors.tradeMethods ? 'picker-error' : ''}}"
+            >
+              <view class="picker-view">
+                <text>{{selectedTradeMethodIndex >= 0 ? tradeMethodOptions[selectedTradeMethodIndex] : '请选择交易方式'}}</text>
+                <text class="picker-arrow">▼</text>
+              </view>
+            </picker>
+            <text wx:if="{{errors.tradeMethods}}" class="error-message">{{errors.tradeMethods}}</text>
+          </view>
+        </view>
       </view>
+      
+      <!-- 提交按钮区域 - 移到滚动区域内 -->
+      <view class="submit-section-inline">
+        <button 
+          class="submit-btn {{submitting ? 'submitting' : ''}}" 
+          bindtap="submitForm"
+          disabled="{{submitting}}"
+        >
+          {{submitting ? '发布中...' : (isEdit ? '保存修改' : '立即发布')}}
+        </button>
 
-      <view class="input-group">
-        <view class="input-item">
-          <textarea 
-            class="textarea-field {{errors.description ? 'input-error' : ''}}" 
-            placeholder="描述一下商品的细节、使用感受等（最少10字）" 
-            maxlength="1000"
-            value="{{formData.description}}"
-            bindinput="onInputDescription"
-          />
-          <view class="textarea-counter">{{formData.description.length}}/1000</view>
-          <text wx:if="{{errors.description}}" class="error-message">{{errors.description}}</text>
+        <view class="agreement-text">
+          发布即表示同意
+          <text class="link" bindtap="viewPublishRules">《发布规则》</text>
         </view>
       </view>
     </view>
-
-    <!-- 交易信息区 -->
-    <view class="form-section">
-      <view class="section-title">
-        <text class="title-text">交易信息</text>
-        <text class="required-mark">*</text>
-      </view>
-
-      <view class="input-group">
-        <view class="input-item">
-          <text class="input-label">校区</text>
-          <picker 
-            mode="selector" 
-            range="{{campusOptions}}" 
-            value="{{selectedCampusIndex}}"
-            bindchange="onCampusChange"
-            class="{{errors.campus ? 'picker-error' : ''}}"
-          >
-            <view class="picker-view">
-              <text>{{selectedCampusIndex >= 0 ? campusOptions[selectedCampusIndex] : '请选择校区'}}</text>
-              <text class="picker-arrow">▼</text>
-            </view>
-          </picker>
-          <text wx:if="{{errors.campus}}" class="error-message">{{errors.campus}}</text>
-        </view>
-
-        <view class="input-item">
-          <text class="input-label">交易方式</text>
-          <picker 
-            mode="selector" 
-            range="{{tradeMethodOptions}}" 
-            value="{{selectedTradeMethodIndex}}"
-            bindchange="onTradeMethodChange"
-            class="{{errors.tradeMethods ? 'picker-error' : ''}}"
-          >
-            <view class="picker-view">
-              <text>{{selectedTradeMethodIndex >= 0 ? tradeMethodOptions[selectedTradeMethodIndex] : '请选择交易方式'}}</text>
-              <text class="picker-arrow">▼</text>
-            </view>
-          </picker>
-          <text wx:if="{{errors.tradeMethods}}" class="error-message">{{errors.tradeMethods}}</text>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 提交按钮 -->
-  <view class="submit-section">
-    <button 
-      class="submit-btn {{submitting ? 'submitting' : ''}}" 
-      bindtap="submitForm"
-      disabled="{{submitting}}"
-    >
-      {{submitting ? '发布中...' : (isEdit ? '保存修改' : '立即发布')}}
-    </button>
-
-    <view class="agreement-text">
-      发布即表示同意
-      <text class="link" bindtap="viewPublishRules">《发布规则》</text>
-    </view>
-  </view>
+  </scroll-view>
 </view> 

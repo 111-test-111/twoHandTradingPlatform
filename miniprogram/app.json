@@ -26,23 +26,33 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页"
+        "text": "首页",
+        "iconPath": "assets/icons/home_gray.png",
+        "selectedIconPath": "assets/icons/home_green.png"
       },
       {
         "pagePath": "pages/product/list/list",
-        "text": "商品"
+        "text": "商品",
+        "iconPath": "assets/icons/product_gray.png",
+        "selectedIconPath": "assets/icons/product_green.png"
       },
       {
         "pagePath": "pages/product/publish/publish",
-        "text": "发布"
+        "text": "发布",
+        "iconPath": "assets/icons/publish_gray.png",
+        "selectedIconPath": "assets/icons/publish_green.png"
       },
       {
         "pagePath": "pages/order/list/list",
-        "text": "订单"
+        "text": "订单",
+        "iconPath": "assets/icons/order_gray.png",
+        "selectedIconPath": "assets/icons/order_green.png"
       },
       {
         "pagePath": "pages/user/profile/profile",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "assets/icons/user_gray.png",
+        "selectedIconPath": "assets/icons/user_green.png"
       }
     ]
   },

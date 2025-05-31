@@ -22,6 +22,8 @@ fs.ensureDirSync(path.join(dataDir, 'users'));
 fs.ensureDirSync(path.join(dataDir, 'products'));
 fs.ensureDirSync(path.join(dataDir, 'orders'));
 fs.ensureDirSync(path.join(dataDir, 'messages'));
+fs.ensureDirSync(path.join(dataDir, 'messages', 'images'));
+fs.ensureDirSync(path.join(dataDir, 'messages', 'voices'));
 fs.ensureDirSync(path.join(dataDir, 'evaluations'));
 fs.ensureDirSync(path.join(dataDir, 'uploads'));
 fs.ensureDirSync(path.join(dataDir, 'uploads', 'avatars'));
@@ -34,6 +36,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // 静态文件服务
 app.use('/uploads', express.static(path.join(__dirname, 'data/uploads')));
+app.use('/avatars', express.static(path.join(__dirname, 'data/avatars')));
+app.use('/products', express.static(path.join(__dirname, 'data/products')));
+app.use('/messages/images', express.static(path.join(__dirname, 'data/messages/images')));
+app.use('/messages/voices', express.static(path.join(__dirname, 'data/messages/voices')));
 
 // API 路由
 app.use('/api/auth', authRoutes);

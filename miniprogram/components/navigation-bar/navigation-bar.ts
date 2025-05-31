@@ -67,7 +67,7 @@ Component({
           this.setData({
             ios: !isAndroid,
             innerPaddingRight: `padding-right: ${res.windowWidth - rect.left}px`,
-            leftWidth: `width: ${res.windowWidth - rect.left }px`,
+            leftWidth: `width: ${res.windowWidth - rect.left}px`,
             safeAreaTop: isDevtools || isAndroid ? `height: calc(var(--height) + ${res.safeArea.top}px); padding-top: ${res.safeArea.top}px` : ``
           })
         }
@@ -82,9 +82,8 @@ Component({
       const animated = this.data.animated
       let displayStyle = ''
       if (animated) {
-        displayStyle = `opacity: ${
-          show ? '1' : '0'
-        };transition:opacity 0.5s;`
+        displayStyle = `opacity: ${show ? '1' : '0'
+          };transition:opacity 0.5s;`
       } else {
         displayStyle = `display: ${show ? '' : 'none'}`
       }

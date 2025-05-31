@@ -6,189 +6,196 @@
   </view>
 
   <!-- 商品详情内容 -->
-  <view class="detail-content" wx:if="{{!loading}}">
-    <!-- 商品图片轮播 -->
-    <view class="image-section">
-      <swiper class="image-swiper" 
-              indicator-dots="{{product.images.length > 1}}" 
-              indicator-color="rgba(255, 255, 255, 0.5)"
-              indicator-active-color="#fff"
-              autoplay="false"
-              circular="true"
-              bindchange="onSwiperChange"
-              wx:if="{{product.images && product.images.length > 0}}">
-        <swiper-item wx:for="{{product.images}}" wx:key="index">
-          <image class="product-image" 
-                 src="{{item}}" 
-                 mode="aspectFill"
-                 bindtap="onImageTap"
-                 data-src="{{item}}"
-                 data-index="{{index}}"
-                 binderror="onImageError"
-                 lazy-load="true"></image>
-        </swiper-item>
-      </swiper>
-      <!-- 无图片时的占位符 -->
-      <view class="no-image-placeholder" wx:else>
-        <image class="placeholder-image" src="/assets/images/placeholder.png" mode="aspectFit"></image>
-        <text class="placeholder-text">暂无图片</text>
-      </view>
-      <!-- 图片计数器 -->
-      <view class="image-counter" wx:if="{{product.images && product.images.length > 1}}">
-        <text>{{currentImageIndex + 1}}/{{product.images.length}}</text>
-      </view>
-    </view>
-
-    <!-- 商品基本信息 -->
-    <view class="product-info-card">
-      <view class="price-section">
-        <text class="product-price">¥{{product.price}}</text>
-        <view class="product-status {{product.status === 'available' ? 'status-available' : 'status-sold'}}">
-          {{product.status === 'available' ? '在售' : '已售出'}}
+  <scroll-view class="detail-scroll" scroll-y="true" wx:if="{{!loading}}">
+    <view class="detail-content">
+      <!-- 商品图片轮播 -->
+      <view class="image-section">
+        <swiper class="image-swiper" 
+                indicator-dots="{{product.images.length > 1}}" 
+                indicator-color="rgba(255, 255, 255, 0.5)"
+                indicator-active-color="#fff"
+                autoplay="false"
+                circular="true"
+                bindchange="onSwiperChange"
+                wx:if="{{product.images && product.images.length > 0}}">
+          <swiper-item wx:for="{{product.images}}" wx:key="index">
+            <image class="product-image" 
+                   src="{{item}}" 
+                   mode="aspectFill"
+                   bindtap="onImageTap"
+                   data-src="{{item}}"
+                   data-index="{{index}}"
+                   binderror="onImageError"
+                   lazy-load="true"></image>
+          </swiper-item>
+        </swiper>
+        <!-- 无图片时的占位符 -->
+        <view class="no-image-placeholder" wx:else>
+          <image class="placeholder-image" src="/assets/images/placeholder.png" mode="aspectFit"></image>
+          <text class="placeholder-text">暂无图片</text>
         </view>
-      </view>
-      
-      <text class="product-title">{{product.title}}</text>
-      
-      <!-- 商品标签 -->
-      <view class="product-tags">
-        <view class="tag condition-tag">{{product.condition}}</view>
-        <view class="tag campus-tag">{{product.campus}}</view>
-        <view class="tag category-tag">{{product.category}}</view>
+        <!-- 图片计数器 -->
+        <view class="image-counter" wx:if="{{product.images && product.images.length > 1}}">
+          <text>{{currentImageIndex + 1}}/{{product.images.length}}</text>
+        </view>
       </view>
 
-      <!-- 浏览量和发布时间 -->
-      <view class="product-meta-info">
-        <view class="meta-item">
-          <text class="meta-icon">👀</text>
-          <text class="meta-text">{{product.viewCount || 0}}次浏览</text>
+      <!-- 商品基本信息 -->
+      <view class="product-info-card">
+        <view class="price-section">
+          <text class="product-price">¥{{product.price}}</text>
+          <view class="product-status {{product.status === 'available' ? 'status-available' : 'status-sold'}}">
+            {{product.status === 'available' ? '在售' : '已售出'}}
+          </view>
         </view>
-        <view class="meta-item">
-          <text class="meta-icon">🕒</text>
-          <text class="meta-text">{{formatTime(product.createdAt)}}</text>
+        
+        <text class="product-title">{{product.title}}</text>
+        
+        <!-- 商品标签 -->
+        <view class="product-tags">
+          <view class="tag condition-tag">{{product.condition}}</view>
+          <view class="tag campus-tag">{{product.campus}}</view>
+          <view class="tag category-tag">{{product.category}}</view>
         </view>
-      </view>
-    </view>
 
-    <!-- 商品详细信息 -->
-    <view class="detail-info-card">
-      <view class="card-header">
-        <text class="card-title">商品详情</text>
-      </view>
-      
-      <view class="info-list">
-        <view class="info-item">
-          <text class="info-label">商品描述</text>
-          <text class="info-value description">{{product.description || '暂无描述'}}</text>
-        </view>
-        
-        <view class="info-item">
-          <text class="info-label">成色</text>
-          <text class="info-value">{{product.condition}}</text>
-        </view>
-        
-        <view class="info-item">
-          <text class="info-label">所在校区</text>
-          <text class="info-value">{{product.campus}}</text>
-        </view>
-        
-        <view class="info-item">
-          <text class="info-label">交易方式</text>
-          <text class="info-value">{{product.tradeMethods}}</text>
-        </view>
-        
-        <view class="info-item" wx:if="{{product.region}}">
-          <text class="info-label">交易区域</text>
-          <text class="info-value">{{product.region}}</text>
-        </view>
-        
-        <view class="info-item" wx:if="{{product.category}}">
-          <text class="info-label">商品分类</text>
-          <text class="info-value">{{product.category}}</text>
+        <!-- 浏览量和发布时间 -->
+        <view class="product-meta-info">
+          <view class="meta-item">
+            <text class="meta-icon">👀</text>
+            <text class="meta-text">{{product.viewCount || 0}}次浏览</text>
+          </view>
+          <view class="meta-item">
+            <text class="meta-icon">🕒</text>
+            <text class="meta-text">{{formatTime(product.createdAt)}}</text>
+          </view>
         </view>
       </view>
-    </view>
 
-    <!-- 卖家信息卡片 -->
-    <view class="seller-card" wx:if="{{product.seller}}">
-      <view class="card-header">
-        <text class="card-title">卖家信息</text>
+      <!-- 商品详细信息 -->
+      <view class="detail-info-card">
+        <view class="card-header">
+          <text class="card-title">商品详情</text>
+        </view>
+        
+        <view class="info-list">
+          <view class="info-item description-item">
+            <text class="info-label">商品描述</text>
+            <view class="description-content">
+              <text class="info-value description">{{product.description || '暂无描述'}}</text>
+            </view>
+          </view>
+          
+          <view class="info-item">
+            <text class="info-label">成色</text>
+            <text class="info-value">{{product.condition}}</text>
+          </view>
+          
+          <view class="info-item">
+            <text class="info-label">交易方式</text>
+            <text class="info-value">{{product.tradeMethods}}</text>
+          </view>
+          
+          <view class="info-item">
+            <text class="info-label">所在校区</text>
+            <text class="info-value">{{product.campus}}</text>
+          </view>
+          
+          <view class="info-item">
+            <text class="info-label">商品分类</text>
+            <text class="info-value">{{product.category}}</text>
+          </view>
+          
+          <view class="info-item" wx:if="{{product.region}}">
+            <text class="info-label">交易区域</text>
+            <text class="info-value">{{product.region}}</text>
+          </view>
+        </view>
       </view>
-      
-      <view class="seller-info">
-        <view class="seller-main">
-          <image class="seller-avatar" 
-                 src="{{product.seller.avatar || '/assets/images/placeholder.png'}}" 
-                 mode="aspectFill"></image>
-          <view class="seller-details">
-            <text class="seller-name">{{product.seller.nickname || '匿名用户'}}</text>
-            <view class="seller-id">ID: {{product.seller.id || product.sellerId}}</view>
-            <view class="seller-credit">
-              <text class="credit-label">信用分</text>
-              <text class="credit-score">{{product.seller.creditScore || 100}}</text>
+
+      <!-- 卖家信息卡片 -->
+      <view class="seller-card" wx:if="{{product.seller}}">
+        <view class="card-header">
+          <text class="card-title">卖家信息</text>
+        </view>
+        
+        <view class="seller-info">
+          <view class="seller-main">
+            <image class="seller-avatar" 
+                   src="{{product.seller.avatar || '/assets/images/placeholder.png'}}" 
+                   mode="aspectFill"></image>
+            <view class="seller-details">
+              <text class="seller-name">{{product.seller.nickname || '匿名用户'}}</text>
+              <view class="seller-id">ID: {{product.seller.id || product.sellerId}}</view>
+              <view class="seller-credit">
+                <text class="credit-label">信用分</text>
+                <text class="credit-score">{{product.seller.creditScore || 100}}</text>
+              </view>
+            </view>
+          </view>
+          
+          <view class="seller-stats" wx:if="{{sellerStats}}">
+            <view class="stat-item">
+              <text class="stat-value">{{sellerStats.totalProducts || 0}}</text>
+              <text class="stat-label">商品</text>
+            </view>
+            <view class="stat-item">
+              <text class="stat-value">{{sellerStats.soldProducts || 0}}</text>
+              <text class="stat-label">已售</text>
+            </view>
+            <view class="stat-item">
+              <text class="stat-value">{{sellerStats.positiveRate || 100}}%</text>
+              <text class="stat-label">好评</text>
             </view>
           </view>
         </view>
-        
-        <view class="seller-stats" wx:if="{{sellerStats}}">
-          <view class="stat-item">
-            <text class="stat-value">{{sellerStats.totalProducts || 0}}</text>
-            <text class="stat-label">商品</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-value">{{sellerStats.soldProducts || 0}}</text>
-            <text class="stat-label">已售</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-value">{{sellerStats.positiveRate || 100}}%</text>
-            <text class="stat-label">好评</text>
-          </view>
-        </view>
       </view>
-    </view>
 
-    <!-- 操作按钮区域（非拥有者）-->
-    <view class="action-section" wx:if="{{!isOwner && product.status === 'available'}}">
-      <view class="action-buttons">
-        <button class="action-btn favorite-btn {{isFavorited ? 'favorited' : ''}}" 
-                bindtap="onToggleFavorite">
-          <text class="btn-icon">{{isFavorited ? '❤️' : '🤍'}}</text>
-          <text class="btn-text">{{isFavorited ? '已收藏' : '收藏'}}</text>
-        </button>
-        
-        <button class="action-btn contact-btn" bindtap="onContact">
-          <text class="btn-icon">💬</text>
-          <text class="btn-text">联系卖家</text>
-        </button>
-        
-        <button class="action-btn buy-btn" bindtap="onBuy">
-          <text class="btn-icon">🛒</text>
-          <text class="btn-text">立即购买</text>
-        </button>
-      </view>
+      <!-- 底部空白，为操作按钮留出空间 -->
+      <view class="bottom-space"></view>
     </view>
+  </scroll-view>
 
-    <!-- 卖家操作按钮 -->
-    <view class="action-section" wx:if="{{isOwner}}">
-      <view class="action-buttons owner-actions">
-        <button class="action-btn edit-btn" bindtap="onEdit">
-          <text class="btn-icon">✏️</text>
-          <text class="btn-text">编辑商品</text>
-        </button>
-        
-        <button class="action-btn delete-btn" bindtap="onDelete">
-          <text class="btn-icon">🗑️</text>
-          <text class="btn-text">删除商品</text>
-        </button>
-      </view>
+  <!-- 操作按钮区域（非拥有者）-->
+  <view class="action-section" wx:if="{{!isOwner && product.status === 'available'}}">
+    <view class="action-buttons">
+      <button class="action-btn favorite-btn {{isFavorited ? 'favorited' : ''}}" 
+              bindtap="onToggleFavorite">
+        <text class="btn-icon">{{isFavorited ? '❤️' : '🤍'}}</text>
+        <text class="btn-text">{{isFavorited ? '已收藏' : '收藏'}}</text>
+      </button>
+      
+      <button class="action-btn contact-btn" bindtap="onContact">
+        <text class="btn-icon">💬</text>
+        <text class="btn-text">联系卖家</text>
+      </button>
+      
+      <button class="action-btn buy-btn" bindtap="onBuy">
+        <text class="btn-icon">🛒</text>
+        <text class="btn-text">立即购买</text>
+      </button>
     </view>
+  </view>
 
-    <!-- 已售出状态提示 -->
-    <view class="sold-out-notice" wx:if="{{product.status === 'sold'}}">
-      <view class="notice-content">
-        <text class="notice-icon">📦</text>
-        <text class="notice-text">该商品已售出</text>
-      </view>
+  <!-- 卖家操作按钮 -->
+  <view class="action-section" wx:if="{{isOwner}}">
+    <view class="action-buttons owner-actions">
+      <button class="action-btn edit-btn" bindtap="onEdit">
+        <text class="btn-icon">✏️</text>
+        <text class="btn-text">编辑商品</text>
+      </button>
+      
+      <button class="action-btn delete-btn" bindtap="onDelete">
+        <text class="btn-icon">🗑️</text>
+        <text class="btn-text">删除商品</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 已售出状态提示 -->
+  <view class="sold-out-notice" wx:if="{{product.status === 'sold'}}">
+    <view class="notice-content">
+      <text class="notice-icon">📦</text>
+      <text class="notice-text">该商品已售出</text>
     </view>
   </view>
 </view> 

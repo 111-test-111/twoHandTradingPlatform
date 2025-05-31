@@ -1,6 +1,6 @@
 .container {
     min-height: 100vh;
-    background-color: #f7f7f7;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     padding: 0;
     width: 100%;
     max-width: 100%;
@@ -19,7 +19,7 @@
 
 /* 页面头部 */
 .page-header {
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.95);
     padding: 16px 20px;
     border-bottom: 1px solid #e5e5e5;
 

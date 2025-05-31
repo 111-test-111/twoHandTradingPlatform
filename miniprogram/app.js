@@ -4,7 +4,8 @@ const config = require('./utils/config');
 App({
     globalData: {
         userInfo: null,
-        isLogin: false
+        isLogin: false,
+        baseUrl: config.SERVER_BASE_URL
     },
 
     onLaunch() {
