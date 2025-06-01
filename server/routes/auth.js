@@ -5,11 +5,16 @@ const { generateToken, verifyToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-// 微信小程序配置 - 生产环境应该使用环境变量
+// 微信小程序配置 - 使用环境变量
 const WECHAT_CONFIG = {
-    appId: process.env.WECHAT_APP_ID || 'wxcd43604b3f32f029',
-    appSecret: process.env.WECHAT_APP_SECRET || '253fc41c38d4deb779f01fe9fc2d58c7'
+    appId: process.env.WECHAT_APP_ID,
+    appSecret: process.env.WECHAT_APP_SECRET
 };
+
+// 检查微信配置是否存在
+if (!WECHAT_CONFIG.appId || !WECHAT_CONFIG.appSecret) {
+    console.error('警告: 未设置微信小程序 APP_ID 或 APP_SECRET，请在.env.local文件中配置');
+}
 
 /**
  * 微信登录

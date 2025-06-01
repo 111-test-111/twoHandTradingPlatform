@@ -1,6 +1,9 @@
+// 导入dotenv以加载.env文件
+require('dotenv').config({ path: '../.env.local' });
+
 // 服务器配置
-const SERVER_IP = process.env.SERVER_IP || '192.168.10.34';
-const SERVER_PORT = process.env.PORT || 3000;
+const SERVER_IP = process.env.SERVER_IP || '127.0.0.1';
+const SERVER_PORT = process.env.SERVER_PORT || 3000;
 
 module.exports = {
     // 服务器IP和端口配置

@@ -1,3 +1,6 @@
+// 加载环境变量
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env.local') });
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');

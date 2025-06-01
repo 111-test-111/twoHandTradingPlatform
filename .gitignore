@@ -29,11 +29,8 @@ logs
 *.log
 
 # 运行时配置
-.env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
 
 # 微信小程序相关
 miniprogram/sitemap.json
