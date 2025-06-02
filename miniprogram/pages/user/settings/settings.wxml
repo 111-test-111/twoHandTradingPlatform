@@ -52,36 +52,115 @@
         <view wx:if="{{isLogin}}" class="settings-card">
           <view class="card-title">个人信息</view>
           <view class="settings-list">
-            <view class="setting-item" bindtap="updateNickname">
+            <!-- 编辑个人信息入口 -->
+            <view class="setting-item edit-profile-item" bindtap="goToPersonalInfo">
+              <view class="setting-left">
+                <text class="setting-icon">✨</text>
+                <text class="setting-label">编辑个人信息</text>
+              </view>
+              <view class="setting-right">
+                <text class="setting-value">{{profileCompleteness}}% 完成</text>
+                <!-- <text class="arrow">></text> -->
+              </view>
+            </view>
+            
+            <!-- 用户ID -->
+            <view class="setting-item" bindtap="showUserIdModal">
+              <view class="setting-left">
+                <text class="setting-icon">🔑</text>
+                <text class="setting-label">用户ID</text>
+              </view>
+              <view class="setting-right">
+                <text class="setting-value">{{userId || '未知'}}</text>
+                <text class="arrow">></text>
+              </view>
+            </view>
+            
+            <!-- 昵称 -->
+            <view class="setting-item">
               <view class="setting-left">
                 <text class="setting-icon">👤</text>
                 <text class="setting-label">昵称</text>
               </view>
               <view class="setting-right">
-                <text class="setting-value">{{nickName || '未设置'}}</text>
-                <text class="arrow">></text>
+                <text class="setting-value {{!nickName ? 'incomplete' : ''}}">{{nickName || '待完善'}}</text>
+              </view>
+            </view>
+
+            <!-- 真实姓名 -->
+            <view class="setting-item">
+              <view class="setting-left">
+                <text class="setting-icon">📝</text>
+                <text class="setting-label">真实姓名</text>
+              </view>
+              <view class="setting-right">
+                <text class="setting-value {{!realName ? 'incomplete' : ''}}">{{realName || '待完善'}}</text>
               </view>
             </view>
             
-            <view class="setting-item" bindtap="updateGender">
+            <!-- 性别 -->
+            <view class="setting-item">
               <view class="setting-left">
                 <text class="setting-icon">⚧️</text>
                 <text class="setting-label">性别</text>
               </view>
               <view class="setting-right">
-                <text class="setting-value">{{gender === 1 ? '男' : gender === 2 ? '女' : '未知'}}</text>
-                <text class="arrow">></text>
+                <text class="setting-value {{gender === 0 ? 'incomplete' : ''}}">{{gender === 1 ? '男' : gender === 2 ? '女' : '待完善'}}</text>
+              </view>
+            </view>
+
+            <!-- 手机号 -->
+            <view class="setting-item">
+              <view class="setting-left">
+                <text class="setting-icon">📱</text>
+                <text class="setting-label">手机号</text>
+              </view>
+              <view class="setting-right">
+                <text class="setting-value {{!phone ? 'incomplete' : ''}}">{{phone || '待完善'}}</text>
+              </view>
+            </view>
+
+            <!-- 学号 -->
+            <view class="setting-item">
+              <view class="setting-left">
+                <text class="setting-icon">🎓</text>
+                <text class="setting-label">学号</text>
+              </view>
+              <view class="setting-right">
+                <text class="setting-value {{!studentId ? 'incomplete' : ''}}">{{studentId || '待完善'}}</text>
+              </view>
+            </view>
+
+            <!-- 校区 -->
+            <view class="setting-item">
+              <view class="setting-left">
+                <text class="setting-icon">🏫</text>
+                <text class="setting-label">校区</text>
+              </view>
+              <view class="setting-right">
+                <text class="setting-value {{!campus ? 'incomplete' : ''}}">{{campus || '待完善'}}</text>
+              </view>
+            </view>
+
+            <!-- 宿舍楼 -->
+            <view class="setting-item">
+              <view class="setting-left">
+                <text class="setting-icon">🏠</text>
+                <text class="setting-label">宿舍楼</text>
+              </view>
+              <view class="setting-right">
+                <text class="setting-value {{!dormitory ? 'incomplete' : ''}}">{{dormitory || '待完善'}}</text>
               </view>
             </view>
             
-            <view class="setting-item" bindtap="updateLocation">
+            <!-- 地区 -->
+            <view class="setting-item">
               <view class="setting-left">
                 <text class="setting-icon">📍</text>
                 <text class="setting-label">地区</text>
               </view>
               <view class="setting-right">
-                <text class="setting-value">{{province || country || '未设置'}}</text>
-                <text class="arrow">></text>
+                <text class="setting-value {{!province && !country ? 'incomplete' : ''}}">{{province || country || '待完善'}}</text>
               </view>
             </view>
           </view>

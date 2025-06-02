@@ -236,6 +236,120 @@
     background-color: rgba(102, 126, 234, 0.05);
 }
 
+/* 编辑个人信息特殊样式 - 醒目设计 */
+.setting-item.edit-profile-item {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 24rpx;
+    margin: 30rpx 0;
+    padding: 40rpx 30rpx;
+    box-shadow: 0 12rpx 30rpx rgba(102, 126, 234, 0.2);
+    border: none !important;
+    position: relative;
+    overflow: hidden;
+    // min-height: 120rpx;
+}
+
+.setting-item.edit-profile-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+    pointer-events: none;
+}
+
+.setting-item.edit-profile-item::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: shimmer 3s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.setting-item.edit-profile-item:active {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(2rpx) scale(0.98);
+    box-shadow: 0 8rpx 20rpx rgba(102, 126, 234, 0.25);
+}
+
+.setting-item.edit-profile-item .setting-left {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.setting-item.edit-profile-item .setting-left .setting-icon {
+    font-size: 48rpx;
+    margin-right: 30rpx;
+    animation: editIconPulse 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 4rpx 8rpx rgba(0, 0, 0, 0.1));
+}
+
+.setting-item.edit-profile-item .setting-left .setting-label {
+    color: #fff;
+    font-weight: bold;
+    font-size: 34rpx;
+    text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+    letter-spacing: 1rpx;
+}
+
+.setting-item.edit-profile-item .setting-right {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.setting-item.edit-profile-item .setting-right .setting-value {
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+    font-size: 28rpx;
+    margin-bottom: 8rpx;
+    text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+}
+
+.setting-item.edit-profile-item .setting-right .arrow {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 32rpx;
+    font-weight: bold;
+    transform: rotate(90deg);
+    filter: drop-shadow(0 2rpx 4rpx rgba(0, 0, 0, 0.1));
+}
+
+@keyframes editIconPulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(30deg);
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.3;
+    }
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(30deg);
+        opacity: 0;
+    }
+}
+
 .setting-left {
     display: flex;
     align-items: center;
@@ -262,13 +376,22 @@
 .setting-value {
     font-size: 28rpx;
     color: #666;
-    margin-right: 10rpx;
+    margin-right: 8rpx;
+    max-width: 200rpx;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.setting-value.incomplete {
+    color: #ff9500;
+    font-style: italic;
 }
 
 .arrow {
-    font-size: 26rpx;
-    color: #999;
-    transform: scaleY(1.2);
+    font-size: 24rpx;
+    color: #ccc;
+    transform: rotate(90deg);
 }
 
 /* 退出登录按钮 */
@@ -364,6 +487,30 @@
 
 .setting-item:nth-child(4) {
     animation: slideInRight 0.4s ease-out 0.6s both;
+}
+
+.setting-item:nth-child(5) {
+    animation: slideInRight 0.4s ease-out 0.7s both;
+}
+
+.setting-item:nth-child(6) {
+    animation: slideInRight 0.4s ease-out 0.8s both;
+}
+
+.setting-item:nth-child(7) {
+    animation: slideInRight 0.4s ease-out 0.9s both;
+}
+
+.setting-item:nth-child(8) {
+    animation: slideInRight 0.4s ease-out 1.0s both;
+}
+
+.setting-item:nth-child(9) {
+    animation: slideInRight 0.4s ease-out 1.1s both;
+}
+
+.setting-item:nth-child(10) {
+    animation: slideInRight 0.4s ease-out 1.2s both;
 }
 
 /* 响应式设计 */

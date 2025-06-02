@@ -79,6 +79,24 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`校园二手交易平台服务器运行在端口 ${PORT}`);
     console.log(`本地访问: http://localhost:${PORT}`);
     console.log(`局域网访问: http://0.0.0.0:${PORT}`);
+
+    // 检查关键环境变量
+    console.log('\n=== 环境变量检查 ===');
+    console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
+    console.log('微信 APP_ID:', process.env.WECHAT_APP_ID ? '已配置' : '❌ 未配置');
+    console.log('微信 APP_SECRET:', process.env.WECHAT_APP_SECRET ? '已配置' : '❌ 未配置');
+    console.log('JWT_SECRET:', process.env.JWT_SECRET ? '已配置' : '❌ 未配置');
+    console.log('腾讯地图API Key:', process.env.TENCENT_MAP_KEY ? `已配置 (${process.env.TENCENT_MAP_KEY.substring(0, 8)}...)` : '❌ 未配置');
+
+    // IP定位功能提示
+    if (process.env.TENCENT_MAP_KEY) {
+        console.log('\n✅ IP定位功能已启用');
+        console.log('测试地址: http://localhost:' + PORT + '/api/auth/test-location');
+    } else {
+        console.log('\n⚠️ IP定位功能未配置，请在 .env.local 中设置 TENCENT_MAP_KEY');
+        console.log('申请地址: https://lbs.qq.com/');
+    }
+    console.log('===================\n');
 });
 
 module.exports = app; 

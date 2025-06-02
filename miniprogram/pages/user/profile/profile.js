@@ -83,6 +83,46 @@ Page({
                 shouldRefresh = true;
                 console.log('从发布页面返回，需要刷新数据');
             }
+            // 从设置页面返回，检查用户信息是否有变化
+            else if (fromPagePath.includes('user/settings')) {
+                // 检查全局用户信息是否有变化
+                const globalUserInfo = app.globalData.userInfo;
+                if (globalUserInfo && this.data.userInfo) {
+                    // 比较头像是否有变化
+                    if (globalUserInfo.avatar !== this.data.userInfo.avatar ||
+                        globalUserInfo.nickname !== this.data.userInfo.nickname) {
+                        shouldRefresh = true;
+                        console.log('从设置页面返回，用户信息有变化，需要刷新');
+                    } else {
+                        shouldRefresh = false;
+                        console.log('从设置页面返回，用户信息无变化，使用缓存');
+                    }
+                } else {
+                    shouldRefresh = true;
+                    console.log('从设置页面返回，用户信息异常，需要刷新');
+                }
+            }
+            // 从个人信息页面返回，检查用户信息是否有变化
+            else if (fromPagePath.includes('user/personal-info')) {
+                // 检查全局用户信息是否有变化
+                const globalUserInfo = app.globalData.userInfo;
+                if (globalUserInfo && this.data.userInfo) {
+                    // 比较关键信息是否有变化
+                    if (globalUserInfo.avatar !== this.data.userInfo.avatar ||
+                        globalUserInfo.nickname !== this.data.userInfo.nickname ||
+                        globalUserInfo.phone !== this.data.userInfo.phone ||
+                        globalUserInfo.realName !== this.data.userInfo.realName) {
+                        shouldRefresh = true;
+                        console.log('从个人信息页面返回，用户信息有变化，需要刷新');
+                    } else {
+                        shouldRefresh = false;
+                        console.log('从个人信息页面返回，用户信息无变化，使用缓存');
+                    }
+                } else {
+                    shouldRefresh = true;
+                    console.log('从个人信息页面返回，用户信息异常，需要刷新');
+                }
+            }
             // 从其他页面进入，检查是否是同一个tab切换
             else if (fromPagePath !== this.data.lastFromPage) {
                 shouldRefresh = true;
@@ -93,6 +133,25 @@ Page({
             this.setData({
                 lastFromPage: fromPagePath
             });
+        }
+
+        // 即使不需要完整刷新，也要同步全局用户信息的变化
+        if (!shouldRefresh) {
+            const globalUserInfo = app.globalData.userInfo;
+            if (globalUserInfo && this.data.userInfo) {
+                // 检查关键信息是否有变化
+                if (globalUserInfo.avatar !== this.data.userInfo.avatar ||
+                    globalUserInfo.nickname !== this.data.userInfo.nickname ||
+                    globalUserInfo.phone !== this.data.userInfo.phone ||
+                    globalUserInfo.realName !== this.data.userInfo.realName ||
+                    globalUserInfo.campus !== this.data.userInfo.campus ||
+                    globalUserInfo.dormitory !== this.data.userInfo.dormitory) {
+                    console.log('同步全局用户信息变化');
+                    this.setData({
+                        userInfo: globalUserInfo
+                    });
+                }
+            }
         }
 
         if (shouldRefresh) {

@@ -75,17 +75,21 @@ router.put('/profile', verifyToken, async (req, res) => {
             dormitory,
             contactInfo,
             realName,
-            studentId
+            studentId,
+            phone,
+            gender
         } = req.body;
 
         const updateData = {};
-        if (nickname) updateData.nickname = nickname;
-        if (avatar) updateData.avatar = avatar;
-        if (campus) updateData.campus = campus;
-        if (dormitory) updateData.dormitory = dormitory;
-        if (contactInfo) updateData.contactInfo = contactInfo;
-        if (realName) updateData.realName = realName;
-        if (studentId) updateData.studentId = studentId;
+        if (nickname !== undefined) updateData.nickname = nickname;
+        if (avatar !== undefined) updateData.avatar = avatar;
+        if (campus !== undefined) updateData.campus = campus;
+        if (dormitory !== undefined) updateData.dormitory = dormitory;
+        if (contactInfo !== undefined) updateData.contactInfo = contactInfo;
+        if (realName !== undefined) updateData.realName = realName;
+        if (studentId !== undefined) updateData.studentId = studentId;
+        if (phone !== undefined) updateData.phone = phone;
+        if (gender !== undefined) updateData.gender = gender;
 
         const userModel = new User();
         const updatedUser = await userModel.updateProfile(req.user.id, updateData);

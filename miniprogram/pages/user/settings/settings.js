@@ -13,8 +13,16 @@ Page({
         province: '',
         country: '',
         language: '',
+        profileCompleteness: 0,
+        userId: '',
         canIUseGetUserProfile: false,
-        canIUseOpenData: wx.canIUse('open-data.type.userAvatarUrl') && wx.canIUse('open-data.type.userNickName')
+        canIUseOpenData: wx.canIUse('open-data.type.userAvatarUrl') && wx.canIUse('open-data.type.userNickName'),
+        realName: '',
+        phone: '',
+        studentId: '',
+        campus: '',
+        dormitory: '',
+        contactInfo: ''
     },
 
     onLoad() {
@@ -66,12 +74,24 @@ Page({
                     city: userInfo.city || '',
                     province: userInfo.province || '',
                     country: userInfo.country || '',
-                    language: userInfo.language || ''
+                    language: userInfo.language || '',
+                    userId: userInfo.userId || (userInfo.id ? userInfo.id.substring(0, 8) + '...' : ''),
+                    realName: userInfo.realName || '',
+                    phone: userInfo.phone || '',
+                    studentId: userInfo.studentId || '',
+                    campus: userInfo.campus || '',
+                    dormitory: userInfo.dormitory || '',
+                    contactInfo: userInfo.contactInfo || ''
                 });
+
+                // 计算并设置完成度
+                this.updateProfileCompleteness();
             } else {
                 this.setData({
                     isLogin: false,
-                    userInfo: null
+                    userInfo: null,
+                    profileCompleteness: 0,
+                    userId: ''
                 });
             }
         } catch (error) {
@@ -132,8 +152,18 @@ Page({
                     city: authRes.data.user.city || userInfo.city,
                     province: authRes.data.user.province || userInfo.province,
                     country: authRes.data.user.country || userInfo.country,
-                    language: authRes.data.user.language || userInfo.language
+                    language: authRes.data.user.language || userInfo.language,
+                    userId: authRes.data.user.userId || (authRes.data.user.id ? authRes.data.user.id.substring(0, 8) + '...' : ''),
+                    realName: authRes.data.user.realName || '',
+                    phone: authRes.data.user.phone || '',
+                    studentId: authRes.data.user.studentId || '',
+                    campus: authRes.data.user.campus || '',
+                    dormitory: authRes.data.user.dormitory || '',
+                    contactInfo: authRes.data.user.contactInfo || ''
                 });
+
+                // 计算并设置完成度
+                this.updateProfileCompleteness();
 
                 wx.showToast({
                     title: '登录成功',
@@ -246,8 +276,24 @@ Page({
                     // 更新页面显示
                     this.setData({
                         avatarUrl: newAvatarUrl,
-                        userInfo: app.globalData.userInfo
+                        userInfo: app.globalData.userInfo,
+                        userId: app.globalData.userInfo.userId || (app.globalData.userInfo.id ? app.globalData.userInfo.id.substring(0, 8) + '...' : ''),
+                        nickName: app.globalData.userInfo.nickname || '',
+                        gender: app.globalData.userInfo.gender || 0,
+                        city: app.globalData.userInfo.city || '',
+                        province: app.globalData.userInfo.province || '',
+                        country: app.globalData.userInfo.country || '',
+                        language: app.globalData.userInfo.language || '',
+                        realName: app.globalData.userInfo.realName || '',
+                        phone: app.globalData.userInfo.phone || '',
+                        studentId: app.globalData.userInfo.studentId || '',
+                        campus: app.globalData.userInfo.campus || '',
+                        dormitory: app.globalData.userInfo.dormitory || '',
+                        contactInfo: app.globalData.userInfo.contactInfo || ''
                     });
+
+                    // 计算并设置完成度
+                    this.updateProfileCompleteness();
 
                     wx.hideLoading();
                     wx.showToast({
@@ -312,8 +358,25 @@ Page({
 
                 // 更新页面状态
                 this.setData({
-                    userInfo: updatedUser
+                    userInfo: updatedUser,
+                    userId: updatedUser.userId || (updatedUser.id ? updatedUser.id.substring(0, 8) + '...' : ''),
+                    avatarUrl: updatedUser.avatar || '',
+                    nickName: updatedUser.nickname || '',
+                    gender: updatedUser.gender || 0,
+                    city: updatedUser.city || '',
+                    province: updatedUser.province || '',
+                    country: updatedUser.country || '',
+                    language: updatedUser.language || '',
+                    realName: updatedUser.realName || '',
+                    phone: updatedUser.phone || '',
+                    studentId: updatedUser.studentId || '',
+                    campus: updatedUser.campus || '',
+                    dormitory: updatedUser.dormitory || '',
+                    contactInfo: updatedUser.contactInfo || ''
                 });
+
+                // 计算并设置完成度
+                this.updateProfileCompleteness();
 
                 console.log('用户资料更新成功');
             } else {
@@ -374,13 +437,7 @@ Page({
     // 联系客服
     contactService() {
         wx.makePhoneCall({
-            phoneNumber: '400-123-4567',
-            fail: () => {
-                wx.showToast({
-                    title: '无法拨打电话',
-                    icon: 'none'
-                });
-            }
+            phoneNumber: '400-123-4567'
         });
     },
 
@@ -390,6 +447,96 @@ Page({
             title: '关于我们',
             content: '这里是关于我们的介绍...',
             showCancel: false
+        });
+    },
+
+    // 跳转到个人信息编辑页面
+    goToPersonalInfo() {
+        if (!this.data.isLogin) {
+            wx.showToast({
+                title: '请先登录',
+                icon: 'none'
+            });
+            return;
+        }
+
+        wx.navigateTo({
+            url: '/pages/user/personal-info/personal-info'
+        });
+    },
+
+    // 计算个人信息完善度
+    getProfileCompleteness() {
+        if (!this.data.userInfo) return 0;
+
+        const user = this.data.userInfo;
+        const fields = [
+            'nickname',
+            'realName',
+            'phone',
+            'studentId',
+            'campus',
+            'dormitory'
+        ];
+
+        // 性别特殊处理（0表示未设置）
+        const genderComplete = (user.gender && user.gender > 0);
+        // 地区检查（优先检查省份，其次国家）
+        const locationComplete = !!(user.province || user.country);
+
+        let completedCount = 0;
+        fields.forEach(field => {
+            if (user[field] && String(user[field]).trim() !== '') {
+                completedCount++;
+            }
+        });
+
+        if (genderComplete) completedCount++;
+        if (locationComplete) completedCount++;
+
+        const totalFields = fields.length + 2; // 加上性别和地区
+        const percentage = Math.round((completedCount / totalFields) * 100);
+
+        console.log('完成度计算:', {
+            user: user,
+            fields: fields,
+            completedCount: completedCount,
+            totalFields: totalFields,
+            genderComplete: genderComplete,
+            locationComplete: locationComplete,
+            percentage: percentage
+        });
+
+        return percentage;
+    },
+
+    // 更新完成度
+    updateProfileCompleteness() {
+        const newCompleteness = this.getProfileCompleteness();
+        this.setData({
+            profileCompleteness: newCompleteness
+        });
+    },
+
+    // 显示用户ID模态框
+    showUserIdModal() {
+        const fullUserId = this.data.userInfo ? this.data.userInfo.id : '';
+        wx.showModal({
+            title: '用户ID',
+            content: fullUserId,
+            showCancel: true,
+            cancelText: '关闭',
+            confirmText: '复制',
+            success: (res) => {
+                if (res.confirm) {
+                    wx.setClipboardData({
+                        data: fullUserId,
+                        success: () => {
+                            wx.showToast({ title: '已复制到剪切板', icon: 'success' });
+                        }
+                    });
+                }
+            }
         });
     }
 }); 

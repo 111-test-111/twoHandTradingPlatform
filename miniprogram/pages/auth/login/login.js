@@ -292,7 +292,7 @@ Page({
     contactService() {
         wx.showModal({
             title: '联系客服',
-            content: '客服电话：400-123-4567\n\n工作时间：周一至周五 9:00-18:00\n\n您也可以在小程序内留言，我们会及时回复。',
+            content: '客服电话：13705267759\n\n工作时间：周一至周五 9:00-18:00\n\n您也可以在小程序内留言，我们会及时回复。',
             showCancel: false,
             confirmText: '知道了'
         });

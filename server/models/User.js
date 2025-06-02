@@ -22,6 +22,8 @@ class User extends BaseModel {
             city: wechatUserInfo.city || '',
             province: wechatUserInfo.province || '',
             country: wechatUserInfo.country || '',
+            // 新增字段
+            phone: '', // 手机号
             // 校园相关信息
             campus: '', // 校区
             dormitory: '', // 宿舍楼
@@ -45,7 +47,15 @@ class User extends BaseModel {
             favoriteProducts: [] // 收藏的商品ID列表
         };
 
-        return await this.create(userData);
+        const newUser = await this.create(userData);
+
+        // 添加userId字段（使用生成的ID的前8位）
+        if (newUser && newUser.id) {
+            newUser.userId = newUser.id.substring(0, 8) + '...';
+            await this.update(newUser.id, { userId: newUser.userId });
+        }
+
+        return newUser;
     }
 
     // 更新用户信息
@@ -56,7 +66,7 @@ class User extends BaseModel {
 
         const allowedFields = [
             'nickname', 'avatar', 'campus', 'dormitory',
-            'contactInfo', 'realName', 'studentId'
+            'contactInfo', 'realName', 'studentId', 'phone', 'gender', 'userId'
         ];
 
         const updateData = {};

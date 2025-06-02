@@ -1,0 +1,162 @@
+<view class="container">
+  <!-- 导航栏 -->
+  <view class="custom-nav">
+    <view class="nav-left" bindtap="goBack">
+      <text class="nav-back">‹</text>
+    </view>
+    <view class="nav-title">个人信息</view>
+    <view class="nav-right">
+      <!-- 变更提示 -->
+      <view wx:if="{{hasChanges}}" class="changes-indicator">•</view>
+    </view>
+  </view>
+
+  <!-- 主要内容 -->
+  <scroll-view class="content-scroll" scroll-y="true" enhanced="true">
+    <view class="content">
+      
+      <!-- 基本信息 -->
+      <view class="info-section">
+        <view class="section-title">基本信息</view>
+        <view class="info-list">
+          
+          <!-- 昵称 -->
+          <view class="info-item" bindtap="editField" data-field="nickname">
+            <view class="item-left">
+              <text class="item-icon">👤</text>
+              <text class="item-label">昵称</text>
+            </view>
+            <view class="item-right">
+              <text class="item-value {{hasChanges && nickname !== originalData.nickname ? 'changed' : ''}}">{{nickname || '未设置'}}</text>
+              <text class="arrow">></text>
+            </view>
+          </view>
+
+          <!-- 真实姓名 -->
+          <view class="info-item" bindtap="editField" data-field="realName">
+            <view class="item-left">
+              <text class="item-icon">📝</text>
+              <text class="item-label">真实姓名</text>
+            </view>
+            <view class="item-right">
+              <text class="item-value {{hasChanges && realName !== originalData.realName ? 'changed' : ''}}">{{realName || '未设置'}}</text>
+              <text class="arrow">></text>
+            </view>
+          </view>
+
+          <!-- 性别 -->
+          <view class="info-item" bindtap="editField" data-field="gender">
+            <view class="item-left">
+              <text class="item-icon">⚧️</text>
+              <text class="item-label">性别</text>
+            </view>
+            <view class="item-right">
+              <text class="item-value {{hasChanges && gender !== originalData.gender ? 'changed' : ''}}">{{genderOptions[gender]}}</text>
+              <text class="arrow">></text>
+            </view>
+          </view>
+
+          <!-- 手机号 -->
+          <view class="info-item" bindtap="editField" data-field="phone">
+            <view class="item-left">
+              <text class="item-icon">📱</text>
+              <text class="item-label">手机号</text>
+            </view>
+            <view class="item-right">
+              <text class="item-value {{hasChanges && phone !== originalData.phone ? 'changed' : ''}}">{{phone || '未设置'}}</text>
+              <text class="arrow">></text>
+            </view>
+          </view>
+
+        </view>
+      </view>
+
+      <!-- 校园信息 -->
+      <view class="info-section">
+        <view class="section-title">校园信息</view>
+        <view class="info-list">
+          
+          <!-- 学号 -->
+          <view class="info-item" bindtap="editField" data-field="studentId">
+            <view class="item-left">
+              <text class="item-icon">🎓</text>
+              <text class="item-label">学号</text>
+            </view>
+            <view class="item-right">
+              <text class="item-value {{hasChanges && studentId !== originalData.studentId ? 'changed' : ''}}">{{studentId || '未设置'}}</text>
+              <text class="arrow">></text>
+            </view>
+          </view>
+
+          <!-- 校区 -->
+          <view class="info-item" bindtap="editField" data-field="campus">
+            <view class="item-left">
+              <text class="item-icon">🏫</text>
+              <text class="item-label">校区</text>
+            </view>
+            <view class="item-right">
+              <text class="item-value {{hasChanges && campus !== originalData.campus ? 'changed' : ''}}">{{campus || '未设置'}}</text>
+              <text class="arrow">></text>
+            </view>
+          </view>
+
+          <!-- 宿舍楼 -->
+          <view class="info-item" bindtap="editField" data-field="dormitory">
+            <view class="item-left">
+              <text class="item-icon">🏠</text>
+              <text class="item-label">宿舍楼</text>
+            </view>
+            <view class="item-right">
+              <text class="item-value {{hasChanges && dormitory !== originalData.dormitory ? 'changed' : ''}}">{{dormitory || '未设置'}}</text>
+              <text class="arrow">></text>
+            </view>
+          </view>
+
+          <!-- 联系方式 -->
+          <view class="info-item" bindtap="editField" data-field="contactInfo">
+            <view class="item-left">
+              <text class="item-icon">📞</text>
+              <text class="item-label">其他联系方式</text>
+            </view>
+            <view class="item-right">
+              <text class="item-value {{hasChanges && contactInfo !== originalData.contactInfo ? 'changed' : ''}}">{{contactInfo || '未设置'}}</text>
+              <text class="arrow">></text>
+            </view>
+          </view>
+
+        </view>
+      </view>
+
+      <!-- 温馨提示 -->
+      <view class="tips-section">
+        <view class="tips-content">
+          <text class="tips-icon">💡</text>
+          <text class="tips-text">完善个人信息有助于其他用户了解您，提高交易成功率</text>
+        </view>
+      </view>
+
+      <!-- 底部占位，防止按钮遮挡内容 -->
+      <view class="bottom-placeholder"></view>
+
+    </view>
+  </scroll-view>
+
+  <!-- 底部操作按钮 -->
+  <view class="bottom-actions">
+    <button class="cancel-btn" bindtap="cancelChanges" disabled="{{saving}}">
+      取消
+    </button>
+    <button class="save-btn" bindtap="saveChanges" disabled="{{saving || !hasChanges}}" loading="{{saving}}">
+      {{saving ? '保存中...' : '保存'}}
+    </button>
+  </view>
+
+  <!-- 性别选择器 -->
+  <picker wx:if="{{showGenderPicker}}" 
+          range="{{genderOptions}}" 
+          bindchange="onGenderPickerChange"
+          bindcancel="onGenderPickerCancel">
+    <view class="picker-placeholder"></view>
+  </picker>
+
+</view> 

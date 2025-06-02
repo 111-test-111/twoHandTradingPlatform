@@ -255,6 +255,11 @@ const AuthAPI = {
     // 刷新token
     refreshToken() {
         return apiService.post('/auth/refresh');
+    },
+
+    // 更新用户地理位置信息
+    updateLocation() {
+        return apiService.post('/auth/update-location');
     }
 };
 

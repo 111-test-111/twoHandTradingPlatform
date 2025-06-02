@@ -8,6 +8,7 @@
     "pages/order/detail/detail",
     "pages/user/profile/profile",
     "pages/user/settings/settings",
+    "pages/user/personal-info/personal-info",
     "pages/auth/login/login",
     "pages/message/chat/chat",
     "pages/message/list/list"

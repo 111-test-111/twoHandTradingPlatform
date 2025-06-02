@@ -11,11 +11,19 @@ App({
     onLaunch() {
         console.log('小程序启动');
         this.clearOldConfig(); // 清理旧的配置缓存
-        this.checkLogin();
+        this.checkLogin().then(isLoggedIn => {
+            if (isLoggedIn) {
+                this.updateUserLocation(); // 如果已登录，则更新位置信息
+            }
+        });
     },
 
     onShow() {
         console.log('小程序显示');
+        // 每次小程序显示时，也更新位置信息
+        if (this.globalData.isLogin) {
+            this.updateUserLocation();
+        }
     },
 
     onHide() {
@@ -103,5 +111,24 @@ App({
         this.globalData.isLogin = false;
         wx.removeStorageSync('userInfo');
         wx.removeStorageSync('token');
+    },
+
+    // 更新用户地理位置
+    async updateUserLocation() {
+        try {
+            console.log('开始更新用户地理位置');
+            const res = await AuthAPI.updateLocation();
+
+            if (res.success && res.data && res.data.user) {
+                // 更新全局用户信息和本地存储
+                this.globalData.userInfo = res.data.user;
+                wx.setStorageSync('userInfo', res.data.user);
+                console.log('用户地理位置更新成功:', res.data.user.province, res.data.user.city);
+            } else {
+                console.warn('更新地理位置失败:', res.message);
+            }
+        } catch (error) {
+            console.error('更新用户地理位置出错:', error);
+        }
     }
 }); 
