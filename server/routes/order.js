@@ -17,7 +17,14 @@ router.post('/create', verifyToken, async (req, res) => {
             tradeMethod,
             tradeLocation,
             contactInfo,
-            message
+            message,
+            buyerName,
+            buyerPhone,
+            buyerCampus,
+            buyerAddress,
+            paymentMethod,
+            payAmount,
+            buyerMessage
         } = req.body;
 
         if (!productId) {
@@ -62,6 +69,15 @@ router.post('/create', verifyToken, async (req, res) => {
             });
         }
 
+        // 先更新商品状态为预订，确保原子性操作
+        const updateResult = await productModel.updateStatus(productId, 'reserved');
+        if (!updateResult) {
+            return res.status(500).json({
+                success: false,
+                message: '更新商品状态失败'
+            });
+        }
+
         const orderData = {
             productId: product.id,
             sellerId: product.sellerId,
@@ -72,13 +88,17 @@ router.post('/create', verifyToken, async (req, res) => {
             tradeMethod: tradeMethod || '面交',
             tradeLocation,
             contactInfo,
-            message
+            message,
+            buyerName,
+            buyerPhone,
+            buyerCampus,
+            buyerAddress,
+            paymentMethod,
+            payAmount,
+            buyerMessage
         };
 
         const order = await orderModel.createOrder(orderData);
-
-        // 更新商品状态为预订
-        await productModel.updateStatus(productId, 'reserved');
 
         res.json({
             success: true,
@@ -105,7 +125,12 @@ router.get('/my/buyer', verifyToken, async (req, res) => {
         const { status, page = 1, limit = 10 } = req.query;
         const orderModel = new Order();
 
-        const orders = await orderModel.findByBuyerId(req.user.id, status);
+        // 获取所有买家订单并根据状态过滤
+        let orders = await orderModel.findByBuyerId(req.user.id);
+        if (status) {
+            const statusList = status.split(',');
+            orders = orders.filter(order => statusList.includes(order.status));
+        }
 
         // 分页
         const total = orders.length;
@@ -153,7 +178,12 @@ router.get('/my/seller', verifyToken, async (req, res) => {
         const { status, page = 1, limit = 10 } = req.query;
         const orderModel = new Order();
 
-        const orders = await orderModel.findBySellerId(req.user.id, status);
+        // 获取所有卖家订单并根据状态过滤
+        let orders = await orderModel.findBySellerId(req.user.id);
+        if (status) {
+            const statusList = status.split(',');
+            orders = orders.filter(order => statusList.includes(order.status));
+        }
 
         // 分页
         const total = orders.length;
@@ -287,27 +317,34 @@ router.put('/:id/status', verifyToken, async (req, res) => {
         }
 
         // 状态流转验证
-        if (order.status === 'completed' || order.status === 'cancelled') {
+        if (order.status === 'completed' || order.status === 'cancelled' || order.status === 'rejected') {
             return res.status(400).json({
                 success: false,
-                message: '订单已完成或已取消，无法修改状态'
+                message: '订单已完成、已取消或已拒绝，无法修改状态'
             });
         }
 
+        // 更新订单状态
         const updatedOrder = await orderModel.updateOrderStatus(id, status, req.user.id);
 
         // 更新商品状态
         const productModel = new Product();
-        if (status === 'completed') {
-            await productModel.updateStatus(order.productId, 'sold');
+        try {
+            if (status === 'completed') {
+                await productModel.updateStatus(order.productId, 'sold');
 
-            // 更新用户信用分和交易计数
-            const userModel = new User();
-            await userModel.updateCreditScore(order.buyerId, 2, 'success');
-            await userModel.updateCreditScore(order.sellerId, 2, 'success');
-            await userModel.incrementCounter(order.buyerId, 'buy');
-        } else if (status === 'rejected' || status === 'cancelled') {
-            await productModel.updateStatus(order.productId, 'available');
+                // 更新用户信用分和交易计数
+                const userModel = new User();
+                await userModel.updateCreditScore(order.buyerId, 2, 'success');
+                await userModel.updateCreditScore(order.sellerId, 2, 'success');
+                await userModel.incrementCounter(order.buyerId, 'buy');
+            } else if (status === 'rejected' || status === 'cancelled') {
+                // 订单被拒绝或取消时，将商品状态恢复为可用
+                await productModel.updateStatus(order.productId, 'available');
+            }
+        } catch (error) {
+            console.error('更新商品状态失败:', error);
+            // 继续执行，不影响订单状态更新
         }
 
         res.json({
@@ -350,6 +387,44 @@ router.get('/stats', verifyToken, async (req, res) => {
             success: false,
             message: '获取订单统计失败'
         });
+    }
+});
+
+/**
+ * 删除订单
+ * DELETE /api/order/:id
+ */
+router.delete('/:id', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const orderModel = new Order();
+        const order = await orderModel.findById(id);
+        if (!order) {
+            return res.status(404).json({ success: false, message: '订单不存在' });
+        }
+
+        // 仅允许已取消或已拒绝的订单删除
+        if (!['cancelled', 'rejected'].includes(order.status)) {
+            return res.status(400).json({ success: false, message: '只有已取消或已拒绝的订单才能删除' });
+        }
+
+        // 权限验证：买家或卖家，确定用户类型
+        let userType = '';
+        if (order.buyerId === req.user.id) {
+            userType = 'buyer';
+        } else if (order.sellerId === req.user.id) {
+            userType = 'seller';
+        } else {
+            return res.status(403).json({ success: false, message: '无权限删除此订单' });
+        }
+
+        // 执行软删除
+        await orderModel.softDelete(id, req.user.id, userType);
+
+        res.json({ success: true, message: '订单已删除' });
+    } catch (error) {
+        console.error('删除订单错误:', error);
+        res.status(500).json({ success: false, message: '删除订单失败' });
     }
 });
 

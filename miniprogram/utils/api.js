@@ -73,7 +73,27 @@ class ApiService {
     getToken() {
         if (!this.token) {
             this.token = wx.getStorageSync('token') || '';
+            console.log('从存储获取token:', this.token ? '已获取' : '未获取');
         }
+
+        // 如果token为空，尝试从app获取
+        if (!this.token) {
+            try {
+                const app = getApp();
+                if (app && app.globalData && app.globalData.isLogin) {
+                    console.log('尝试从app全局数据获取token');
+                    // 如果应用已登录但token为空，重新获取
+                    const token = wx.getStorageSync('token') || '';
+                    if (token) {
+                        this.token = token;
+                        console.log('从app全局数据获取token成功');
+                    }
+                }
+            } catch (e) {
+                console.error('尝试从app获取token失败:', e);
+            }
+        }
+
         return this.token;
     }
 
@@ -94,8 +114,38 @@ class ApiService {
             // 添加认证头
             if (config.needAuth !== false) {
                 const token = this.getToken();
+                console.log('请求认证状态:', config.url, token ? '有token' : '无token');
+
                 if (token) {
                     header['Authorization'] = `Bearer ${token}`;
+                } else {
+                    console.warn('请求需要认证但无token:', config.url);
+
+                    // 检查是否已登录但token丢失
+                    const app = getApp();
+                    if (app && app.globalData && app.globalData.isLogin) {
+                        console.error('用户已登录但token丢失，尝试重新登录');
+                        // 清除登录状态
+                        app.clearUserInfo();
+
+                        setTimeout(() => {
+                            wx.showModal({
+                                title: '登录已失效',
+                                content: '您的登录已失效，请重新登录',
+                                showCancel: false,
+                                success: () => {
+                                    wx.navigateTo({
+                                        url: '/pages/auth/login/login'
+                                    });
+                                }
+                            });
+                        }, 500);
+
+                        return reject({
+                            success: false,
+                            message: '登录已失效，请重新登录'
+                        });
+                    }
                 }
             }
 
@@ -284,7 +334,18 @@ const ProductAPI = {
 
     // 更新商品
     update(id, data) {
-        return apiService.put(`/product/${id}`, data);
+        console.log(`更新商品 ID:${id}, 数据:`, data);
+        return new Promise((resolve, reject) => {
+            apiService.put(`/product/${id}`, data)
+                .then(res => {
+                    console.log('更新商品响应:', res);
+                    resolve(res);
+                })
+                .catch(error => {
+                    console.error('更新商品失败:', error);
+                    reject(error);
+                });
+        });
     },
 
     // 删除商品
@@ -295,34 +356,248 @@ const ProductAPI = {
 
 const OrderAPI = {
     // 创建订单
-    create(data) {
-        return apiService.post('/order/create', data);
+    async create(data) {
+        try {
+            console.log('创建订单, 数据:', data);
+
+            // 先检查商品状态
+            const productRes = await ProductAPI.getDetail(data.productId);
+            if (!productRes.success) {
+                console.error('商品信息获取失败:', productRes);
+                return {
+                    success: false,
+                    message: '商品信息获取失败'
+                };
+            }
+
+            // 检查商品是否仍然可用
+            if (productRes.data.status !== 'available') {
+                console.error('商品当前不可购买, 状态:', productRes.data.status);
+                return {
+                    success: false,
+                    message: '该商品当前不可购买，可能已被预订或售出'
+                };
+            }
+
+            // 创建订单
+            const orderRes = await apiService.post('/order/create', data);
+            console.log('创建订单响应:', orderRes);
+
+            // 创建订单成功后，检查商品状态是否已更新为reserved
+            if (orderRes.success) {
+                try {
+                    // 再次检查商品状态
+                    const updatedProductRes = await ProductAPI.getDetail(data.productId);
+                    if (updatedProductRes.success && updatedProductRes.data.status !== 'reserved') {
+                        console.warn('订单创建成功，但商品状态未更新为reserved，当前状态:',
+                            updatedProductRes.data.status);
+                        // 尝试更新商品状态
+                        await ProductAPI.update(data.productId, { status: 'reserved' });
+                    }
+                } catch (error) {
+                    console.error('检查商品状态失败:', error);
+                    // 不影响主流程
+                }
+            }
+
+            return orderRes;
+        } catch (error) {
+            console.error('创建订单失败:', error);
+            return {
+                success: false,
+                message: '创建订单失败'
+            };
+        }
     },
 
     // 获取买家订单
     getBuyerOrders(params) {
-        return apiService.get('/order/my/buyer', params);
+        console.log('请求买家订单参数:', params);
+        return new Promise((resolve, reject) => {
+            apiService.get('/order/my/buyer', params)
+                .then(res => {
+                    console.log('获取买家订单响应:', res);
+
+                    // 标准化响应结构并构造 product 对象
+                    if (res.success && res.data) {
+                        const { records = [], pagination = {} } = res.data;
+                        const orders = records.map(order => ({
+                            ...order,
+                            product: {
+                                id: order.productId,
+                                title: order.productTitle,
+                                price: order.productPrice,
+                                images: apiService.processImageUrls(order.productImages || [])
+                            }
+                        }));
+                        res.data.orders = orders;
+                        res.data.hasMore = pagination.currentPage < pagination.totalPages;
+                    }
+
+                    resolve(res);
+                })
+                .catch(error => {
+                    console.error('获取买家订单失败:', error);
+                    reject(error);
+                });
+        });
     },
 
     // 获取卖家订单
     getSellerOrders(params) {
-        return apiService.get('/order/my/seller', params);
+        console.log('请求卖家订单参数:', params);
+        return new Promise((resolve, reject) => {
+            apiService.get('/order/my/seller', params)
+                .then(res => {
+                    console.log('获取卖家订单响应:', res);
+
+                    // 标准化响应结构并构造 product 对象
+                    if (res.success && res.data) {
+                        const { records = [], pagination = {} } = res.data;
+                        const orders = records.map(order => ({
+                            ...order,
+                            product: {
+                                id: order.productId,
+                                title: order.productTitle,
+                                price: order.productPrice,
+                                images: apiService.processImageUrls(order.productImages || [])
+                            }
+                        }));
+                        res.data.orders = orders;
+                        res.data.hasMore = pagination.currentPage < pagination.totalPages;
+                    }
+
+                    resolve(res);
+                })
+                .catch(error => {
+                    console.error('获取卖家订单失败:', error);
+                    reject(error);
+                });
+        });
     },
 
     // 获取订单详情
     getDetail(id) {
-        return apiService.get(`/order/${id}`);
+        return apiService.get(`/order/${id}`).then(async res => {
+            if (res.success && res.data) {
+                // 尝试获取完整产品详情以包含状态
+                let productDetail;
+                try {
+                    const productRes = await ProductAPI.getDetail(res.data.productId);
+                    if (productRes.success && productRes.data) {
+                        productDetail = productRes.data;
+                    } else {
+                        productDetail = {
+                            id: res.data.productId,
+                            title: res.data.productTitle,
+                            price: res.data.productPrice,
+                            images: apiService.processImageUrls(res.data.productImages || []),
+                            status: res.data.productStatus || 'available'
+                        };
+                    }
+                } catch (e) {
+                    productDetail = {
+                        id: res.data.productId,
+                        title: res.data.productTitle,
+                        price: res.data.productPrice,
+                        images: apiService.processImageUrls(res.data.productImages || []),
+                        status: res.data.productStatus || 'available'
+                    };
+                }
+                res.data.product = productDetail;
+            }
+            return res;
+        });
     },
 
     // 更新订单状态
-    updateStatus(id, status) {
-        return apiService.put(`/order/${id}/status`, { status });
+    async updateStatus(id, status) {
+        try {
+            // 先获取订单详情，了解商品ID
+            const orderRes = await this.getDetail(id);
+            if (!orderRes.success) {
+                return {
+                    success: false,
+                    message: '获取订单信息失败'
+                };
+            }
+
+            const productId = orderRes.data.productId;
+
+            // 更新订单状态
+            const res = await apiService.put(`/order/${id}/status`, { status });
+
+            if (res.success) {
+                // 根据新状态更新商品状态
+                try {
+                    let productStatus = null;
+
+                    switch (status) {
+                        case 'completed':
+                            // 交易完成，商品状态设为已售出
+                            productStatus = 'sold';
+                            break;
+                        case 'cancelled':
+                        case 'rejected':
+                            // 订单取消或拒绝，商品状态恢复为可用
+                            productStatus = 'available';
+                            break;
+                        // 其他状态不需要更改商品状态
+                    }
+
+                    if (productStatus) {
+                        // 获取当前商品状态，确保只在需要时更新
+                        const productRes = await ProductAPI.getDetail(productId);
+                        if (productRes.success && productRes.data.status !== productStatus) {
+                            console.log(`更新商品[${productId}]状态: ${productRes.data.status} -> ${productStatus}`);
+                            await ProductAPI.update(productId, { status: productStatus });
+                        }
+                    }
+                } catch (error) {
+                    console.error('更新商品状态失败:', error);
+                    // 商品状态更新失败不影响订单状态更新
+                }
+            }
+
+            return res;
+        } catch (error) {
+            console.error('更新订单状态失败:', error);
+            return {
+                success: false,
+                message: '更新订单状态失败'
+            };
+        }
     },
 
     // 获取订单统计
     getStats(type) {
         return apiService.get('/order/stats', { type });
-    }
+    },
+
+    // 删除订单
+    delete(id) {
+        console.log('准备删除订单, ID:', id);
+        return new Promise((resolve, reject) => {
+            try {
+                console.log('发送删除订单API请求:', `/order/${id}`);
+                apiService.delete(`/order/${id}`)
+                    .then(res => {
+                        console.log('删除订单API响应成功:', res);
+                        resolve(res);
+                    })
+                    .catch(error => {
+                        console.error('删除订单API响应失败:', error);
+                        reject(error);
+                    });
+            } catch (error) {
+                console.error('删除订单请求异常:', error);
+                reject({
+                    success: false,
+                    message: '删除订单请求异常'
+                });
+            }
+        });
+    },
 };
 
 const UserAPI = {

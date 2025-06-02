@@ -81,6 +81,12 @@ Page({
 
                 // 保存token
                 wx.setStorageSync('token', token);
+                console.log('已保存token:', token);
+
+                // 确保API服务也设置了token
+                const { apiService } = require('../../../utils/api');
+                apiService.setToken(token);
+                console.log('已设置API服务的token');
 
                 // 更新全局用户信息
                 app.setUserInfo(user);
@@ -205,6 +211,13 @@ Page({
             if (authRes.success) {
                 // 保存用户信息
                 wx.setStorageSync('token', authRes.data.token);
+                console.log('已保存token:', authRes.data.token);
+
+                // 确保API服务也设置了token
+                const { apiService } = require('../../../utils/api');
+                apiService.setToken(authRes.data.token);
+                console.log('已设置API服务的token');
+
                 app.setUserInfo(authRes.data.user);
 
                 wx.showToast({

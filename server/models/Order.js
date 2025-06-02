@@ -18,13 +18,25 @@ class Order extends BaseModel {
             tradeMethod: orderData.tradeMethod || '面交',
             tradeLocation: orderData.tradeLocation || '',
             contactInfo: orderData.contactInfo || '',
-            message: orderData.message || '', // 买家留言
+            message: orderData.message || '', // 卖家留言或备注
+            // 买家信息
+            buyerName: orderData.buyerName || '',
+            buyerPhone: orderData.buyerPhone || '',
+            buyerCampus: orderData.buyerCampus || '',
+            buyerAddress: orderData.buyerAddress || '',
+            paymentMethod: orderData.paymentMethod || '',
+            payAmount: orderData.payAmount || 0,
+            buyerMessage: orderData.buyerMessage || '',
+            // 订单状态
             status: 'pending', // pending, accepted, rejected, completed, cancelled
             paymentStatus: 'unpaid', // unpaid, paid, refunded
             // 时间记录
             acceptedAt: null,
             completedAt: null,
-            cancelledAt: null
+            cancelledAt: null,
+            // 软删除字段
+            buyerDeleted: false,
+            sellerDeleted: false
         };
 
         return await this.create(order);
@@ -32,7 +44,10 @@ class Order extends BaseModel {
 
     // 根据买家ID查找订单
     async findByBuyerId(buyerId, status = null) {
-        const condition = { buyerId };
+        const condition = {
+            buyerId,
+            buyerDeleted: false  // 只返回未被买家删除的订单
+        };
         if (status) {
             condition.status = status;
         }
@@ -41,7 +56,10 @@ class Order extends BaseModel {
 
     // 根据卖家ID查找订单
     async findBySellerId(sellerId, status = null) {
-        const condition = { sellerId };
+        const condition = {
+            sellerId,
+            sellerDeleted: false  // 只返回未被卖家删除的订单
+        };
         if (status) {
             condition.status = status;
         }
@@ -86,7 +104,9 @@ class Order extends BaseModel {
 
     // 获取订单统计
     async getOrderStatistics(userId, userType = 'buyer') {
-        const condition = userType === 'buyer' ? { buyerId: userId } : { sellerId: userId };
+        const condition = userType === 'buyer'
+            ? { buyerId: userId, buyerDeleted: false }
+            : { sellerId: userId, sellerDeleted: false };
         const orders = await this.findWhere(condition);
 
         const stats = {
@@ -121,7 +141,9 @@ class Order extends BaseModel {
 
     // 获取用户最近的订单
     async getRecentOrders(userId, userType = 'buyer', limit = 10) {
-        const condition = userType === 'buyer' ? { buyerId: userId } : { sellerId: userId };
+        const condition = userType === 'buyer'
+            ? { buyerId: userId, buyerDeleted: false }
+            : { sellerId: userId, sellerDeleted: false };
         const orders = await this.findWhere(condition);
 
         // 按创建时间排序
@@ -140,6 +162,28 @@ class Order extends BaseModel {
         // 只有已完成的订单才能评价，且评价人必须是买家或卖家
         return order.status === 'completed' &&
             (order.buyerId === userId || order.sellerId === userId);
+    }
+
+    // 软删除订单（仅对特定用户）
+    async softDelete(orderId, userId, userType = 'buyer') {
+        const order = await this.findById(orderId);
+        if (!order) {
+            throw new Error('订单不存在');
+        }
+
+        // 检查用户权限
+        if (userType === 'buyer' && order.buyerId !== userId) {
+            throw new Error('无权限删除此订单');
+        } else if (userType === 'seller' && order.sellerId !== userId) {
+            throw new Error('无权限删除此订单');
+        }
+
+        // 根据用户类型设置软删除标志
+        const updateData = userType === 'buyer'
+            ? { buyerDeleted: true }
+            : { sellerDeleted: true };
+
+        return await this.update(orderId, updateData);
     }
 }
 

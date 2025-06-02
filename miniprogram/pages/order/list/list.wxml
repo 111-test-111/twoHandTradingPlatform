@@ -1,3 +1,115 @@
 <view class="container">
-  <text>订单列表页面（开发中）</text>
+  <!-- 加载中状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 订单列表内容 -->
+  <view class="order-list-content" wx:else>
+    <!-- 顶部切换区域 -->
+    <view class="top-section">
+      <!-- 买家/卖家模式切换 -->
+      <view class="mode-toggle">
+        <view class="{{isBuyerMode ? 'active' : ''}}" bindtap="toggleMode">我的购买</view>
+        <view class="{{!isBuyerMode ? 'active' : ''}}" bindtap="toggleMode">我的出售</view>
+      </view>
+      
+      <!-- 状态标签页 -->
+      <scroll-view class="tabs-scroll" scroll-x="true" enhanced="true" show-scrollbar="false">
+        <view class="tabs">
+          <view 
+            wx:for="{{tabs}}" 
+            wx:key="index" 
+            class="tab {{activeTab === index ? 'active' : ''}}"
+            bindtap="onTabChange"
+            data-index="{{index}}">
+            <text>{{item}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 订单列表 -->
+    <scroll-view 
+      class="orders-scroll" 
+      scroll-y="true" 
+      enhanced="true" 
+      bindscrolltolower="onReachBottom"
+      enable-back-to-top="true">
+      
+      <!-- 空状态 -->
+      <view class="empty-state" wx:if="{{displayOrders.length === 0}}">
+        <view class="empty-icon">📦</view>
+        <text class="empty-title">暂无订单</text>
+        <text class="empty-desc">{{isBuyerMode ? '您还没有购买过商品' : '您还没有卖出过商品'}}</text>
+      </view>
+
+      <!-- 订单卡片列表 -->
+      <view class="order-list" wx:else>
+        <view 
+          wx:for="{{displayOrders}}" 
+          wx:key="id" 
+          class="order-card">
+          
+          <!-- 订单状态标签 -->
+          <view class="order-status-badge {{item.status}}">
+            {{getStatusText(item.status)}}
+          </view>
+          
+          <!-- 订单主内容 -->
+          <view class="order-main" bindtap="goToOrderDetail" data-id="{{item.id}}">
+            <!-- 商品信息 -->
+            <view class="order-product">
+              <image 
+                class="product-image" 
+                src="{{item.product.images[0] || '/assets/images/placeholder.png'}}" 
+                mode="aspectFill"></image>
+              <view class="product-details">
+                <text class="product-title">{{item.product.title}}</text>
+                <view class="product-meta">
+                  <text class="product-price">¥{{item.product.price}}</text>
+                </view>
+                
+                <!-- 交易方信息 -->
+                <view class="party-info">
+                  <text class="party-label">{{isBuyerMode ? '卖家' : '买家'}}:</text>
+                  <text class="party-name">{{isBuyerMode ? (item.seller.nickname || '未知用户') : (item.buyerName || item.buyer.nickname || '未知用户')}}</text>
+                </view>
+              </view>
+            </view>
+            
+            <!-- 订单时间 -->
+            <view class="order-time">
+              <text>{{formatTime(item.createdAt)}}</text>
+            </view>
+          </view>
+          
+          <!-- 订单底部操作区 -->
+          <view class="order-footer">
+            <text class="order-total">订单金额: ¥{{item.payAmount || item.product.price}}</text>
+            <view class="order-actions">
+              <view class="action-btn view-btn" bindtap="goToOrderDetail" data-id="{{item.id}}">查看详情</view>
+              <!-- 注意: 只使用catchtap避免事件冒泡 -->
+              <view wx:if="{{item.status === 'cancelled' || item.status === 'rejected'}}" 
+                  catchtap="deleteOrder" 
+                  data-id="{{item.id}}" 
+                  class="action-btn delete-btn">删除</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 加载更多 -->
+      <view wx:if="{{loadingMore}}" class="loading-more">
+        <view class="loading-spinner small"></view>
+        <text class="loading-text">加载更多...</text>
+      </view>
+
+      <!-- 无更多数据 -->
+      <view wx:if="{{!hasMore && displayOrders.length > 0}}" class="no-more">
+        <text>— 没有更多订单了 —</text>
+      </view>
+    </scroll-view>
+  </view>
 </view>

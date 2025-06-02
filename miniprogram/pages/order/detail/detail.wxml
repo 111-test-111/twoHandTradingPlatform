@@ -1,5 +1,259 @@
 <view class="container">
-  <scroll-view class="content-scroll" scroll-y="true" enhanced="true">
-    <text>订单详情页面（开发中）</text>
+  <!-- 加载中状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 主要内容区域 -->
+  <scroll-view class="content-scroll" scroll-y="true" enhanced="true" wx:if="{{!loading}}">
+    <!-- 商品信息卡片 -->
+    <view class="card product-card">
+      <view class="card-header">
+        <text class="card-title">商品信息</text>
+      </view>
+      <view class="product-info">
+        <image class="product-image" src="{{product.images[0]}}" mode="aspectFill"></image>
+        <view class="product-details">
+          <text class="product-title">{{product.title}}</text>
+          <view class="product-meta">
+            <text class="product-price">¥{{product.price}}</text>
+            <text class="product-status">{{product.status === 'available' ? '在售' : (product.status === 'reserved' ? '预定中' : '已售出')}}</text>
+          </view>
+          <view class="product-tags">
+            <text class="tag">{{product.condition}}</text>
+            <text class="tag">{{product.campus}}</text>
+            <text class="tag">{{product.category}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 卖家信息卡片 -->
+    <view class="card seller-card">
+      <view class="card-header">
+        <text class="card-title">卖家信息</text>
+      </view>
+      <view class="seller-info">
+        <image class="seller-avatar" src="{{seller.avatar || '/assets/images/placeholder.png'}}" mode="aspectFill"></image>
+        <view class="seller-details">
+          <text class="seller-name">{{seller.nickname || '匿名用户'}}</text>
+          <text class="seller-rating">信用评分: {{seller.creditScore || 100}}</text>
+          <view class="seller-stats" wx:if="{{sellerStats}}">
+            <text>{{sellerStats.soldProducts || 0}}笔成交</text>
+            <text>好评率 {{sellerStats.positiveRate || 100}}%</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 创建订单模式：买家信息表单 -->
+    <view wx:if="{{action === 'buy'}}" class="card buyer-form-card">
+      <view class="card-header">
+        <text class="card-title">买家信息</text>
+        <text class="card-subtitle">请完善您的信息以便卖家与您联系</text>
+      </view>
+
+      <view class="form-group">
+        <view class="form-item">
+          <text class="form-label">姓名 <text class="required">*</text></text>
+          <input class="form-input {{errors.name ? 'input-error' : ''}}" 
+                 placeholder="请输入您的姓名" 
+                 value="{{buyerInfo.name}}" 
+                 bindinput="onInputName" />
+          <text class="error-text" wx:if="{{errors.name}}">{{errors.name}}</text>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">联系电话 <text class="required">*</text></text>
+          <input class="form-input {{errors.phone ? 'input-error' : ''}}" 
+                 type="number" 
+                 placeholder="请输入您的手机号码" 
+                 value="{{buyerInfo.phone}}" 
+                 bindinput="onInputPhone" />
+          <text class="error-text" wx:if="{{errors.phone}}">{{errors.phone}}</text>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">校区 <text class="required">*</text></text>
+          <picker mode="selector" 
+                  range="{{campusOptions}}" 
+                  value="{{selectedCampusIndex}}" 
+                  bindchange="onCampusChange" 
+                  class="{{errors.campus ? 'picker-error' : ''}}">
+            <view class="picker-view">
+              <text>{{selectedCampusIndex >= 0 ? campusOptions[selectedCampusIndex] : '请选择校区'}}</text>
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+          <text class="error-text" wx:if="{{errors.campus}}">{{errors.campus}}</text>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">详细地址 <text class="required">*</text></text>
+          <input class="form-input {{errors.address ? 'input-error' : ''}}" 
+                 placeholder="请输入详细地址（宿舍楼/教学楼等）" 
+                 value="{{buyerInfo.address}}" 
+                 bindinput="onInputAddress" />
+          <text class="error-text" wx:if="{{errors.address}}">{{errors.address}}</text>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">支付方式</text>
+          <picker mode="selector" 
+                  range="{{paymentMethods}}" 
+                  value="{{selectedPaymentIndex}}" 
+                  bindchange="onPaymentMethodChange">
+            <view class="picker-view">
+              <text>{{paymentMethods[selectedPaymentIndex]}}</text>
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">预付金额 <text class="required">*</text></text>
+          <input class="form-input {{errors.payAmount ? 'input-error' : ''}}" 
+                 type="digit" 
+                 placeholder="请输入预付金额" 
+                 value="{{buyerInfo.payAmount}}" 
+                 bindinput="onInputPayAmount" />
+          <text class="error-text" wx:if="{{errors.payAmount}}">{{errors.payAmount}}</text>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">留言</text>
+          <textarea class="form-textarea" 
+                    placeholder="给卖家留言（选填）" 
+                    value="{{buyerInfo.message}}" 
+                    bindinput="onInputMessage" />
+        </view>
+      </view>
+
+      <view class="action-section">
+        <button class="submit-btn {{submitting ? 'submitting' : ''}}" 
+                bindtap="submitOrder" 
+                disabled="{{submitting}}">
+          {{submitting ? '提交中...' : '提交订单'}}
+        </button>
+      </view>
+    </view>
+
+    <!-- 查看订单模式：订单详情信息 -->
+    <view wx:if="{{action === 'view' && order}}" class="card order-detail-card">
+      <view class="card-header">
+        <text class="card-title">订单信息</text>
+        <view class="order-status {{order.status}}">{{
+          order.status === 'pending' ? '待确认' :
+          order.status === 'accepted' ? '已确认' :
+          order.status === 'completed' ? '已完成' :
+          order.status === 'cancelled' ? '已取消' :
+          order.status === 'rejected' ? '已拒绝' : '未知状态'
+        }}</view>
+      </view>
+
+      <view class="order-info-list">
+        <view class="info-item">
+          <text class="info-label">订单编号</text>
+          <text class="info-value">{{order.id}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">创建时间</text>
+          <text class="info-value">{{formatTime(order.createdAt)}}</text>
+        </view>
+        <view class="info-item" wx:if="{{order.updatedAt !== order.createdAt}}">
+          <text class="info-label">更新时间</text>
+          <text class="info-value">{{formatTime(order.updatedAt)}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">买家姓名</text>
+          <text class="info-value">{{buyerInfo.name}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">联系电话</text>
+          <text class="info-value">{{buyerInfo.phone}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">所在校区</text>
+          <text class="info-value">{{buyerInfo.campus}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">详细地址</text>
+          <text class="info-value">{{buyerInfo.address}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">支付方式</text>
+          <text class="info-value">{{buyerInfo.paymentMethod}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">预付金额</text>
+          <text class="info-value">¥{{buyerInfo.payAmount}}</text>
+        </view>
+        <view class="info-item" wx:if="{{buyerInfo.message}}">
+          <text class="info-label">买家留言</text>
+          <text class="info-value">{{buyerInfo.message}}</text>
+        </view>
+      </view>
+
+      <!-- 卖家视角：审核订单 -->
+      <view wx:if="{{isSeller}}" class="seller-actions">
+        <view class="section-title">
+          <text class="title-text">卖家操作</text>
+        </view>
+        
+        <view wx:if="{{order.status === 'pending'}}" class="action-buttons">
+          <button class="action-btn reject-btn" bindtap="rejectOrder">拒绝订单</button>
+          <button class="action-btn confirm-btn" bindtap="confirmOrder">确认订单</button>
+        </view>
+        
+        <view wx:if="{{order.status === 'accepted'}}" class="action-buttons">
+          <button class="action-btn contact-btn" bindtap="contactOtherParty">联系买家</button>
+          <button class="action-btn complete-btn" bindtap="completeOrder">确认收款完成</button>
+        </view>
+        
+        <view wx:if="{{order.status === 'completed' || order.status === 'cancelled' || order.status === 'rejected'}}" class="completed-notice">
+          <text class="notice-text">
+            {{order.status === 'completed' ? '订单已完成' : 
+              order.status === 'cancelled' ? '订单已取消' : '订单已拒绝'}}
+          </text>
+        </view>
+      </view>
+
+      <!-- 买家视角：支付和确认 -->
+      <view wx:if="{{isBuyer}}" class="buyer-actions">
+        <view class="section-title">
+          <text class="title-text">买家操作</text>
+        </view>
+        
+        <view wx:if="{{order.status === 'pending'}}" class="waiting-notice">
+          <text class="notice-text">等待卖家确认订单...</text>
+          <button class="action-btn cancel-btn" bindtap="cancelOrder">取消订单</button>
+        </view>
+        
+        <view wx:if="{{order.status === 'accepted'}}" class="payment-section">
+          <view class="payment-notice">
+            <text class="notice-text">卖家已确认订单，请按约定方式付款</text>
+          </view>
+          <view class="action-buttons">
+            <button class="action-btn contact-btn" bindtap="contactOtherParty">联系卖家</button>
+            <button class="action-btn pay-btn" bindtap="payOrder">确认已付款</button>
+            <button class="action-btn cancel-btn" bindtap="cancelOrder">取消订单</button>
+          </view>
+        </view>
+        
+        <view wx:if="{{order.status === 'completed'}}" class="completed-notice">
+          <text class="notice-text">交易已完成</text>
+        </view>
+        
+        <view wx:if="{{order.status === 'cancelled' || order.status === 'rejected'}}" class="failed-notice">
+          <text class="notice-text">
+            {{order.status === 'cancelled' ? '订单已取消' : '订单被卖家拒绝'}}
+          </text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部空白 -->
+    <view class="bottom-space"></view>
   </scroll-view>
 </view> 

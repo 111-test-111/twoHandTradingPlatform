@@ -233,30 +233,16 @@ Page({
     // 立即购买
     async onBuy() {
         try {
-            wx.showLoading({ title: '创建订单中...' });
+            wx.showLoading({ title: '处理中...' });
 
-            const res = await OrderAPI.create({
-                productId: this.data.product.id,
-                tradeMethod: this.data.product.tradeMethods,
-                message: '我想购买这个商品'
+            // 跳转到订单详情页，不立即设置商品状态为reserved
+            wx.navigateTo({
+                url: `/pages/order/detail/detail?productId=${this.data.product.id}&action=buy`
             });
-
-            if (res.success) {
-                wx.showToast({
-                    title: '订单创建成功',
-                    icon: 'success'
-                });
-
-                setTimeout(() => {
-                    wx.navigateTo({
-                        url: `/pages/order/detail/detail?id=${res.data.id}`
-                    });
-                }, 1500);
-            }
         } catch (error) {
-            console.error('创建订单失败:', error);
+            console.error('处理订单失败:', error);
             wx.showToast({
-                title: '订单创建失败',
+                title: '操作失败',
                 icon: 'error'
             });
         } finally {

@@ -21,6 +21,7 @@ Page({
         isRecording: false,
         recordingTime: 0,
         recordingTimer: null,
+        isDragOutside: false, // 是否拖拽到模态框外面
 
         // 播放相关
         currentPlayingId: '', // 当前正在播放的消息ID
@@ -46,9 +47,10 @@ Page({
         // 预览图片相关
         isPreviewingImage: false,
 
-        // 自动刷新相关
-        autoRefreshTimer: null,
-        lastMessageId: '' // 记录最后一条消息ID，用于检测新消息
+        // 手动刷新相关
+        isRefreshing: false
+
+        // 其他需要的字段保留
     },
 
     onLoad(options) {
@@ -79,9 +81,6 @@ Page({
         wx.setNavigationBarTitle({
             title: '聊天'
         });
-
-        // 启动自动刷新定时器
-        this.startAutoRefresh();
     },
 
     onShow() {
@@ -106,11 +105,6 @@ Page({
         if (this.data.conversationId) {
             this.markAsRead();
         }
-
-        // 如果定时器不存在，重新启动
-        if (!this.data.autoRefreshTimer) {
-            this.startAutoRefresh();
-        }
     },
 
     onHide() {
@@ -127,9 +121,6 @@ Page({
             // 如果显示了录音模态框但未录音，则关闭模态框
             this.setData({ showRecordModal: false });
         }
-
-        // 停止自动刷新定时器
-        this.stopAutoRefresh();
     },
 
     onUnload() {
@@ -147,134 +138,14 @@ Page({
         // 清除录音计时器
         this.clearRecordingTimer();
 
-        // 停止自动刷新定时器
-        this.stopAutoRefresh();
-    },
-
-    // 开始自动刷新
-    startAutoRefresh() {
-        // 确保没有现有的定时器
-        this.stopAutoRefresh();
-
-        // 创建新的定时器，每秒执行一次
-        const timer = setInterval(() => {
-            this.silentRefresh();
-        }, 1000);
-
-        this.setData({ autoRefreshTimer: timer });
-        console.log('已启动自动刷新定时器');
-
-        // 显示调试信息
-        this.showDebugInfo('自动刷新已启动');
-    },
-
-    // 停止自动刷新
-    stopAutoRefresh() {
-        if (this.data.autoRefreshTimer) {
-            clearInterval(this.data.autoRefreshTimer);
-            this.setData({ autoRefreshTimer: null });
-            console.log('已停止自动刷新定时器');
+        // 清理录音管理器
+        if (this.recorderManager) {
+            this.recorderManager.stop();
+            this.recorderManager.offStart();
+            this.recorderManager.offStop();
+            this.recorderManager.offError();
+            this.recorderManager = null;
         }
-    },
-
-    // 显示调试信息（仅在开发环境）
-    showDebugInfo(message, isError = false) {
-        // 控制台输出
-        if (isError) {
-            console.error('[调试]', message);
-        } else {
-            console.log('[调试]', message);
-        }
-
-        // 仅在开发环境显示调试信息
-        if (true) { // 可以替换为getApp().globalData.isDev等判断
-            wx.showToast({
-                title: message,
-                icon: 'none',
-                duration: 1000
-            });
-        }
-    },
-
-    // 静默刷新消息（不显示加载动画，不影响用户体验）
-    async silentRefresh() {
-        if (!this.data.conversationId || this.data.loadingHistory) return;
-
-        try {
-            // 获取最新消息
-            const res = await MessageAPI.getMessages(this.data.conversationId, {
-                page: 1,
-                pageSize: 20
-            });
-
-            if (res.success && res.data && res.data.records && res.data.records.length > 0) {
-                const newMessages = this.processMessages(res.data.records);
-
-                // 检查是否有新消息
-                let hasNewMessages = false;
-
-                // 获取服务器返回的最新消息的ID集合
-                const serverMessageIds = new Set(newMessages.map(msg => msg.id));
-
-                // 获取当前已有消息的ID集合
-                const currentMessageIds = new Set(this.data.messages.map(msg => msg.id));
-
-                // 检查是否有新消息（服务器返回的消息ID不在当前消息列表中）
-                for (const id of serverMessageIds) {
-                    if (!currentMessageIds.has(id)) {
-                        hasNewMessages = true;
-                        console.log(`检测到新消息，ID: ${id}`);
-                        break;
-                    }
-                }
-
-                // 或者检查数量是否不同（也可能有新消息）
-                if (newMessages.length !== this.data.messages.length) {
-                    hasNewMessages = true;
-                    console.log(`消息数量变化: 服务器${newMessages.length}条，本地${this.data.messages.length}条`);
-                }
-
-                // 如果有新消息，更新消息列表
-                if (hasNewMessages) {
-                    console.log('检测到新消息，更新聊天记录');
-
-                    // 记录当前滚动位置
-                    let shouldScrollToBottom = false;
-                    if (this.isScrolledToBottom()) {
-                        shouldScrollToBottom = true;
-                    }
-
-                    // 更新消息列表
-                    this.setData({
-                        messages: newMessages,
-                        lastMessageId: newMessages.length > 0 ? newMessages[0].id : ''
-                    });
-
-                    // 如果之前是在底部，则滚动到底部显示新消息
-                    if (shouldScrollToBottom) {
-                        setTimeout(() => {
-                            this.scrollToBottom();
-                        }, 50);
-                    }
-
-                    // 标记为已读
-                    this.markAsRead();
-
-                    // 显示调试信息
-                    this.showDebugInfo('收到新消息');
-                }
-            }
-        } catch (error) {
-            console.error('静默刷新消息失败:', error);
-            // 静默失败，不提示用户
-            this.showDebugInfo('刷新失败:' + error.message, true);
-        }
-    },
-
-    // 检查是否滚动到底部
-    isScrolledToBottom() {
-        // 这里使用一个简单的方法来判断：如果最近没有手动滚动，则认为在底部
-        return !this.data.disableAutoScroll;
     },
 
     // 初始化聊天
@@ -419,22 +290,6 @@ Page({
                     setTimeout(() => {
                         this.scrollToBottom();
                     }, 300);
-                }
-
-                // 更新最后一条消息ID，用于自动刷新检测
-                if (newMessages.length > 0) {
-                    // 创建消息ID集合用于调试
-                    const messageIds = newMessages.map(msg => msg.id);
-                    console.log('当前消息ID集合:', messageIds);
-
-                    // 保存最后一条消息ID
-                    this.setData({
-                        lastMessageId: newMessages[0]?.id || ''
-                    });
-                    console.log('设置最后消息ID:', newMessages[0]?.id || '无消息');
-                } else {
-                    console.log('无消息，清空lastMessageId');
-                    this.setData({ lastMessageId: '' });
                 }
             } else {
                 throw new Error(res.message || '加载消息失败');
@@ -703,6 +558,147 @@ Page({
         });
     },
 
+    // 触摸开始 - 长按开始录音
+    onRecordTouchStart(e) {
+        console.log('触摸开始');
+
+        // 记录触摸开始位置和时间
+        this.touchStartX = e.touches[0].clientX;
+        this.touchStartY = e.touches[0].clientY;
+        this.touchStartTime = Date.now(); // 记录触摸开始时间
+        this.shouldCancelRecord = false;
+
+        // 重置拖拽状态
+        this.setData({ isDragOutside: false });
+
+        // 设置长按计时器，长按500ms后开始录音
+        this.longPressTimer = setTimeout(() => {
+            if (!this.shouldCancelRecord && this.touchStartTime) {
+                console.log('长按500ms，开始录音');
+                this.startRecording();
+            }
+        }, 500);
+    },
+
+    // 触摸移动 - 检测是否拖出模态框区域
+    onRecordTouchMove(e) {
+        if (!this.data.isRecording) return;
+
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+
+        // 获取模态框容器的位置信息
+        wx.createSelectorQuery().in(this).select('.recording-container').boundingClientRect((rect) => {
+            if (rect) {
+                // 判断是否拖出了模态框区域
+                const isOutside = currentX < rect.left ||
+                    currentX > rect.right ||
+                    currentY < rect.top ||
+                    currentY > rect.bottom;
+
+                if (isOutside) {
+                    // 拖出了模态框，标记为取消录音
+                    this.shouldCancelRecord = true;
+                    console.log('拖出模态框，准备取消录音');
+
+                    // 更新UI状态为拖拽到外面
+                    if (!this.data.isDragOutside) {
+                        this.setData({ isDragOutside: true });
+                    }
+                } else {
+                    // 重新进入模态框，恢复正常状态
+                    this.shouldCancelRecord = false;
+
+                    // 更新UI状态为在模态框内
+                    if (this.data.isDragOutside) {
+                        this.setData({ isDragOutside: false });
+                    }
+                }
+            }
+        }).exec();
+    },
+
+    // 触摸结束 - 根据状态决定发送或取消
+    onRecordTouchEnd(e) {
+        console.log('触摸结束, shouldCancelRecord:', this.shouldCancelRecord);
+
+        // 计算触摸持续时间
+        const touchDuration = Date.now() - this.touchStartTime;
+        console.log('触摸持续时间:', touchDuration, 'ms');
+
+        // 清除长按计时器
+        if (this.longPressTimer) {
+            clearTimeout(this.longPressTimer);
+            this.longPressTimer = null;
+        }
+
+        if (this.data.isRecording) {
+            // 正在录音状态
+            if (this.shouldCancelRecord) {
+                // 取消录音
+                this.cancelRecording();
+            } else {
+                // 检查录音时长
+                if (this.data.recordingTime < 1) {
+                    // 录音时长过短，停止录音但保持模态框打开
+                    console.log('录音时长过短，不发送');
+                    this.stopRecordingWithoutSending();
+                    wx.showToast({
+                        title: '录音时间太短',
+                        icon: 'none',
+                        duration: 2000
+                    });
+                } else {
+                    // 发送录音
+                    this.finishRecording();
+                }
+            }
+        } else {
+            // 未在录音状态
+            if (touchDuration < 500) {
+                // 短按（小于500ms），不做任何反应，只重置状态
+                console.log('短按，重置模态框状态');
+                this.setData({ 
+                    isDragOutside: false,
+                    recordingTime: 0
+                });
+            } else {
+                // 长按但录音未开始或开始失败，关闭模态框
+                console.log('长按但录音未开始，关闭模态框');
+                this.setData({ showRecordModal: false });
+            }
+        }
+
+        // 重置触摸开始时间
+        this.touchStartTime = null;
+    },
+
+    // 触摸取消 - 取消录音
+    onRecordTouchCancel(e) {
+        console.log('触摸取消');
+
+        if (this.data.isRecording) {
+            this.cancelRecording();
+        } else {
+            // 计算触摸持续时间
+            const touchDuration = Date.now() - this.touchStartTime;
+            if (touchDuration < 1000) {
+                // 短按，显示提示但不退出模态框
+                wx.showToast({
+                    title: '录音时长过短，发送失败',
+                    icon: 'none',
+                    duration: 2000
+                });
+            } else {
+                // 长按后取消，关闭模态框
+                this.setData({
+                    showRecordModal: false,
+                    isDragOutside: false
+                });
+            }
+        }
+    },
+
     // 从模态框开始录音
     startRecordingFromModal() {
         this.startRecording();
@@ -721,8 +717,9 @@ Page({
         if (this.recorderManager && this.data.isRecording) {
             this.recorderManager.stop();
 
-            // 清除录音文件
+            // 清除录音文件，标记为取消状态
             this.tempRecordFilePath = '';
+            this.recordingCancelled = true;
         }
 
         // 清除录音计时器
@@ -731,16 +728,49 @@ Page({
         // 关闭录音模态框并重置状态
         this.setData({
             showRecordModal: false,
-            isRecording: false
+            isRecording: false,
+            isDragOutside: false,
+            recordingTime: 0
         });
+
+        // 重置录音相关变量
+        this.recordingCancelled = false;
+        this.tempRecordFilePath = '';
     },
 
     // 完成录音
     finishRecording() {
         console.log('完成录音');
+        this.recordingCancelled = false; // 标记为正常完成
+
+        // 重置拖拽状态
+        this.setData({ isDragOutside: false });
+
         if (this.recorderManager && this.data.isRecording) {
             this.recorderManager.stop();
         }
+    },
+
+    // 停止录音但不发送消息（用于录音时长过短的情况）
+    stopRecordingWithoutSending() {
+        console.log('停止录音但不发送');
+        this.recordingCancelled = true; // 标记为取消状态，不发送消息
+
+        // 重置拖拽状态，但保持模态框打开
+        this.setData({ isDragOutside: false });
+
+        if (this.recorderManager && this.data.isRecording) {
+            this.recorderManager.stop();
+        }
+
+        // 清除录音计时器
+        this.clearRecordingTimer();
+
+        // 重置录音时间，为下次录音做准备
+        this.setData({
+            recordingTime: 0,
+            isRecording: false
+        });
     },
 
     // 开始录音
@@ -765,6 +795,21 @@ Page({
 
     // 执行录音逻辑
     doStartRecording() {
+        // 如果已经有录音管理器，先清理
+        if (this.recorderManager) {
+            console.log('清理之前的录音管理器');
+            this.recorderManager.stop();
+            // 移除所有事件监听器
+            this.recorderManager.offStart();
+            this.recorderManager.offStop();
+            this.recorderManager.offError();
+            this.recorderManager = null;
+        }
+
+        // 重置录音相关状态
+        this.recordingCancelled = false;
+        this.tempRecordFilePath = '';
+
         // 获取全局唯一的录音管理器
         const recorderManager = wx.getRecorderManager();
 
@@ -807,12 +852,23 @@ Page({
 
         // 录音完成事件
         recorderManager.onStop((res) => {
-            console.log('录音完成:', res);
+            console.log('录音完成:', res, '是否取消:', this.recordingCancelled);
             this.clearRecordingTimer();
+
+            // 检查是否是因为录音时长过短而停止的录音
+            const isShortRecording = this.recordingCancelled && this.data.recordingTime < 1;
+
             this.setData({
                 isRecording: false,
-                showRecordModal: false
+                showRecordModal: isShortRecording ? true : false // 录音过短时保持模态框打开
             });
+
+            // 如果是取消录音，直接返回不处理
+            if (this.recordingCancelled) {
+                console.log('录音已取消，不发送');
+                this.recordingCancelled = false; // 重置状态
+                return;
+            }
 
             // 保存临时录音文件路径
             this.tempRecordFilePath = res.tempFilePath;
@@ -1197,6 +1253,104 @@ Page({
 
         // 与上条消息间隔超过5分钟则显示时间
         return (currentTime - lastTime) > 5 * 60 * 1000;
+    },
+
+    // 手动刷新聊天消息
+    async manualRefresh() {
+        if (this.data.isRefreshing || !this.data.conversationId) return;
+
+        console.log('开始手动刷新消息');
+
+        // 设置刷新状态
+        this.setData({ isRefreshing: true });
+
+        try {
+            // 获取最新消息
+            const res = await MessageAPI.getMessages(this.data.conversationId, {
+                page: 1,
+                pageSize: 20
+            });
+
+            if (res.success && res.data && res.data.records) {
+                const newMessages = this.processMessages(res.data.records);
+                console.log(`手动刷新获取到 ${newMessages.length} 条消息`);
+
+                // 检查是否有新消息
+                let hasNewMessages = false;
+
+                // 获取服务器返回的最新消息的ID集合
+                const serverMessageIds = new Set(newMessages.map(msg => msg.id));
+
+                // 获取当前已有消息的ID集合
+                const currentMessageIds = new Set(this.data.messages.map(msg => msg.id));
+
+                // 检查是否有新消息
+                for (const id of serverMessageIds) {
+                    if (!currentMessageIds.has(id)) {
+                        hasNewMessages = true;
+                        console.log(`检测到新消息，ID: ${id}`);
+                        break;
+                    }
+                }
+
+                // 或者检查数量是否不同
+                if (newMessages.length !== this.data.messages.length) {
+                    hasNewMessages = true;
+                    console.log(`消息数量变化: 服务器${newMessages.length}条，本地${this.data.messages.length}条`);
+                }
+
+                if (hasNewMessages) {
+                    // 记录当前滚动位置
+                    let shouldScrollToBottom = false;
+                    if (!this.data.disableAutoScroll) {
+                        shouldScrollToBottom = true;
+                    }
+
+                    // 更新消息列表
+                    this.setData({
+                        messages: newMessages,
+                        page: 1,
+                        hasMoreHistory: res.data.records.length === 20
+                    });
+
+                    // 如果之前是在底部，则滚动到底部显示新消息
+                    if (shouldScrollToBottom) {
+                        setTimeout(() => {
+                            this.scrollToBottom();
+                        }, 100);
+                    }
+
+                    // 标记为已读
+                    this.markAsRead();
+
+                    wx.showToast({
+                        title: '已刷新',
+                        icon: 'success',
+                        duration: 1500
+                    });
+                } else {
+                    wx.showToast({
+                        title: '暂无新消息',
+                        icon: 'none',
+                        duration: 1500
+                    });
+                }
+            } else {
+                throw new Error(res.message || '刷新失败');
+            }
+        } catch (error) {
+            console.error('手动刷新失败:', error);
+            wx.showToast({
+                title: '刷新失败',
+                icon: 'error',
+                duration: 2000
+            });
+        } finally {
+            // 延迟重置刷新状态，让用户看到旋转效果
+            setTimeout(() => {
+                this.setData({ isRefreshing: false });
+            }, 500);
+        }
     },
 
     // 加载更多历史消息

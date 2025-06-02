@@ -8,6 +8,11 @@
         <text class="online-status">在线</text>
       </view>
     </view>
+    
+    <!-- 手动刷新按钮 -->
+    <view class="refresh-button {{isRefreshing ? 'refreshing' : ''}}" bindtap="manualRefresh">
+      <image class="refresh-icon" src="/assets/icons/refresh.svg" mode="aspectFit"/>
+    </view>
   </view>
 
   <!-- 消息列表 -->
@@ -187,22 +192,50 @@
 
   <!-- 录音模态框 -->
   <view class="recording-modal" wx:if="{{showRecordModal}}" catchtap="cancelRecording">
-    <view class="recording-container" catchtap="preventBubble">
-      <text class="recording-header">{{isRecording ? '正在录音...' : '准备录音'}}</text>
-      <view class="recording-icon">
-        <view class="pulse" wx:if="{{isRecording}}"></view>
-        <view class="pulse delay" wx:if="{{isRecording}}"></view>
-        <image class="mic-icon" src="/assets/icons/microphone.svg" mode="aspectFit"/>
-        <view class="rec-indicator" wx:if="{{isRecording}}"></view>
+    <view class="recording-container {{isDragOutside ? 'drag-outside' : ''}}" catchtap="preventBubble">
+      <text class="recording-header">{{isDragOutside ? '松开取消录音' : (isRecording ? '正在录音...' : '长按麦克风开始录音')}}</text>
+      
+      <!-- 录音图标区域 -->
+      <view class="recording-icon {{isRecording && !isDragOutside ? 'recording-active' : ''}}"
+            bindtouchstart="onRecordTouchStart" 
+            bindtouchmove="onRecordTouchMove"
+            bindtouchend="onRecordTouchEnd"
+            bindtouchcancel="onRecordTouchCancel">
+        
+        <!-- 录音时的脉冲效果 - 只在正常录音时显示 -->
+        <view class="pulse" wx:if="{{isRecording && !isDragOutside}}"></view>
+        <view class="pulse delay" wx:if="{{isRecording && !isDragOutside}}"></view>
+        
+        <!-- 取消录音时的红色波纹效果 -->
+        <view class="cancel-pulse" wx:if="{{isRecording && isDragOutside}}"></view>
+        <view class="cancel-pulse delay" wx:if="{{isRecording && isDragOutside}}"></view>
+        
+        <!-- 麦克风图标 -->
+        <image class="mic-icon {{isDragOutside ? 'cancel-state' : ''}}" src="/assets/icons/microphone.svg" mode="aspectFit"/>
+        
+        <!-- 录音指示器 - 只在正常录音时显示 -->
+        <view class="rec-indicator" wx:if="{{isRecording && !isDragOutside}}"></view>
+        
+        <!-- 取消指示器 - 拖拽到外面时显示 -->
+        <view class="cancel-indicator" wx:if="{{isRecording && isDragOutside}}">
+          <text class="cancel-icon">×</text>
+        </view>
       </view>
-      <text class="recording-text">{{isRecording ? '点击完成结束录音' : '点击开始录音'}}</text>
+      
+      <text class="recording-text {{isDragOutside ? 'cancel-text' : ''}}">
+        {{isDragOutside ? '松开后取消录音' : (isRecording ? '松开发送，拖出取消' : '长按开始录音')}}
+      </text>
+      
       <text class="recording-duration" wx:if="{{isRecording}}">{{recordingTime}}秒</text>
-      <view class="recording-buttons">
-        <view class="record-btn cancel-btn" catchtap="cancelRecording">取消</view>
-        <view wx:if="{{!isRecording}}" class="record-btn start-btn" catchtap="startRecordingFromModal">开始</view>
-        <view wx:else class="record-btn send-btn" catchtap="finishRecording">完成</view>
+      
+      <!-- 取消录音提示 -->
+      <view class="cancel-hint" wx:if="{{isDragOutside}}">
+        <text class="cancel-hint-text">现在松开将取消录音</text>
       </view>
     </view>
-    <text class="recording-tip">{{isRecording ? '录音中，请对着麦克风说话' : '点击空白区域取消'}}</text>
+    
+    <text class="recording-tip {{isDragOutside ? 'cancel-tip' : ''}}">
+      {{isDragOutside ? '拖回去继续录音' : (isRecording ? '拖动到外面取消录音' : '点击空白区域取消')}}
+    </text>
   </view>
 </view> 

@@ -37,23 +37,41 @@ App({
     async checkLogin() {
         try {
             const token = wx.getStorageSync('token');
+            console.log('检查登录状态, token:', token ? '存在' : '不存在');
+
             if (token) {
                 // 首先从本地存储恢复用户信息，确保离线时也能显示
                 const localUserInfo = wx.getStorageSync('userInfo');
                 if (localUserInfo) {
                     this.globalData.userInfo = localUserInfo;
                     this.globalData.isLogin = true;
+                    console.log('从本地恢复用户信息成功');
+
+                    // 确保API服务实例也有token
+                    const { apiService } = require('./utils/api');
+                    apiService.setToken(token);
+                    console.log('已将token设置到API服务实例');
                 }
 
                 // 尝试从服务器验证token并获取最新用户信息
                 try {
+                    console.log('开始验证token有效性');
                     const res = await AuthAPI.verifyToken();
+                    console.log('token验证结果:', res);
+
                     if (res.success) {
                         this.globalData.isLogin = true;
                         this.globalData.userInfo = res.data.user;
+                        // 确保token正确设置
+                        wx.setStorageSync('token', token);
                         // 更新本地存储的用户信息
                         wx.setStorageSync('userInfo', res.data.user);
+                        console.log('token验证成功，已更新用户信息');
                         return true;
+                    } else {
+                        // token无效，清除登录状态
+                        console.warn('token验证失败，清除登录状态');
+                        this.clearUserInfo();
                     }
                 } catch (networkError) {
                     console.log('网络验证失败，使用本地缓存的用户信息:', networkError);
