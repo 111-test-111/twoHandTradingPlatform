@@ -20,7 +20,7 @@ Page({
             payAmount: 0,
             message: ''
         },
-        campusOptions: ['东校区', '西校区', '南校区', '北校区'],
+        campusOptions: ['邯郸校区', '江湾校区', '枫林校区', '张江校区'],
         selectedCampusIndex: -1,
         paymentMethods: ['微信支付', '支付宝', '校园卡', '现金'],
         selectedPaymentIndex: 0,
@@ -487,7 +487,7 @@ Page({
                 success: async (res) => {
                     if (res.confirm) {
                         wx.showLoading({ title: '处理中...' });
-                        const updateRes = await OrderAPI.updateStatus(this.data.orderId, 'completed');
+                        const updateRes = await OrderAPI.updateStatus(this.data.orderId, 'paid');
 
                         if (updateRes.success) {
                             wx.showToast({
@@ -516,5 +516,15 @@ Page({
                 icon: 'error'
             });
         }
+    },
+
+    // 现在支付（暂时不实现支付逻辑）
+    goToPay() {
+        wx.showModal({
+            title: '支付功能',
+            content: '支付功能正在开发中，敬请期待！\n您可以先使用"确认已付款"功能。',
+            showCancel: false,
+            confirmText: '我知道了'
+        });
     }
 }); 

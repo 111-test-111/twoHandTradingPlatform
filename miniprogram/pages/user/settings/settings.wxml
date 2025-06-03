@@ -160,7 +160,12 @@
                 <text class="setting-label">地区</text>
               </view>
               <view class="setting-right">
-                <text class="setting-value {{!province && !country ? 'incomplete' : ''}}">{{province || country || '待完善'}}</text>
+                <view class="setting-value {{!province && !country ? 'incomplete' : ''}}">
+                  <text wx:if="{{country}}">{{country}}</text>
+                  <text wx:if="{{province}}" style="margin-left: {{country ? '8rpx' : '0'}}">{{province}}</text>
+                  <text wx:if="{{city}}" style="margin-left: {{province || country ? '8rpx' : '0'}}">{{city}}</text>
+                  <text wx:if="{{!country && !province && !city}}">待完善</text>
+                </view>
               </view>
             </view>
           </view>
@@ -216,11 +221,6 @@
       <!-- 退出登录按钮 -->
       <view wx:if="{{isLogin}}" class="logout-section">
         <button class="logout-btn" bindtap="logout">退出登录</button>
-      </view>
-
-      <!-- 版本信息 -->
-      <view class="version-info">
-        <text class="version-text">版本号：v1.0.0</text>
       </view>
     </view>
   </scroll-view>

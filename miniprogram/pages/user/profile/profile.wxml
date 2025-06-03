@@ -5,8 +5,16 @@
     <text class="loading-text">加载中...</text>
   </view>
 
-  <!-- 主要内容 -->
-  <scroll-view wx:else class="content-scroll" scroll-y="true" enhanced="true">
+  <!-- 主要内容 - 使用scroll-view的refresher功能实现下拉刷新 -->
+  <scroll-view wx:else 
+    class="content-scroll" 
+    scroll-y="true" 
+    enhanced="true"
+    refresher-enabled="true"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onScrollRefresh"
+    bindscrolltolower="onReachBottom"
+  >
     <view class="content">
       <!-- 用户信息头部 -->
       <view class="user-header">
@@ -108,12 +116,15 @@
             </view>
             <view class="order-info">
               <text class="order-title">{{item.productTitle || item.title}}</text>
-              <text class="order-price">¥{{item.totalAmount || item.price}}</text>
+              <text class="order-price">¥{{item.payAmount || item.productPrice || item.price || '0'}}</text>
             </view>
             <view class="order-status {{item.status}}">
               {{item.status === 'pending' ? '待处理' : 
+                item.status === 'accepted' ? '已确认' : 
+                item.status === 'paid' ? '待收款确认' :
                 item.status === 'completed' ? '已完成' : 
-                item.status === 'cancelled' ? '已取消' : '处理中'}}
+                item.status === 'cancelled' ? '已取消' : 
+                item.status === 'rejected' ? '已拒绝' : '处理中'}}
             </view>
           </view>
         </view>
@@ -132,14 +143,14 @@
             bindtap="switchTab"
             data-tab="published"
           >
-            已发布 ({{stats.products.total || 0}})
+            已发布 ({{publishedProducts.length || 0}})
           </view>
           <view 
             class="tab-item {{activeTab === 'bought' ? 'active' : ''}}"
             bindtap="switchTab"
             data-tab="bought"
           >
-            已购买
+            已购买 ({{boughtProductsCount || 0}})
           </view>
           <view 
             class="tab-item {{activeTab === 'favorites' ? 'active' : ''}}"
@@ -178,7 +189,7 @@
                   mode="aspectFill"
                   lazy-load="true"
                 />
-                <view wx:if="{{item.status === 'sold'}}" class="sold-mask">
+                <view wx:if="{{item.status === 'sold' && activeTab === 'published'}}" class="sold-mask">
                   <text class="sold-text">已售出</text>
                 </view>
                 <view wx:if="{{activeTab === 'published'}}" class="product-actions">

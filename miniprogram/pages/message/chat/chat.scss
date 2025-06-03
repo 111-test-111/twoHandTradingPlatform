@@ -89,8 +89,7 @@
 .message-list {
     flex: 1;
     padding: 8px 12px;
-    padding-bottom: 80px;
-    /* 为输入框预留空间 */
+    /* 底部内边距现在通过style动态设置 */
     overflow-y: auto;
     overflow-x: hidden;
     width: 100%;
@@ -400,7 +399,7 @@
     }
 
     .message-meta {
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(0, 0, 0, 0.45);
         justify-content: flex-end;
     }
 
@@ -450,104 +449,119 @@
 
 /* 输入区域 */
 .input-container {
+    width: 100%;
+    background-color: #f5f5f5;
+    border-top: 1px solid #e5e5e5;
+    padding: 34px 0;
     position: fixed;
     bottom: 0;
+    /* 默认在底部，会被动态style覆盖 */
     left: 0;
-    right: 0;
     z-index: 100;
-    background-color: #f8f8f8;
-    border-top: 1px solid #e5e5e5;
+    transition: bottom 0.5s cubic-bezier(0.16, 0.68, 0.43, 0.99);
+    /* 使用更长的动画时间与更平滑的缓动曲线 */
 }
 
 .input-section {
-    padding: 8px 16px;
-    padding-bottom: 20px;
-    background-color: #f8f8f8;
-    transition: padding-bottom 0.3s ease;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
 
-    .input-wrapper {
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border-radius: 18px;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+
+    &.with-input {
+        border-radius: 24px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 三按钮区域 */
+    .input-buttons {
         display: flex;
         align-items: center;
-        background-color: #fff;
-        border-radius: 20px;
-        padding: 6px 10px;
-        min-height: 36px;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-        border: 1px solid #e8e8e8;
+        justify-content: space-around;
+        width: 100%;
+        padding: 3px 0;
+        /* 减小上下内边距，与文本框模式保持一致 */
+        height: 54px;
+        /* 固定高度，与文本框模式保持一致 */
+        box-sizing: border-box;
+    }
+
+    .input-button {
+        width: 48px;
+        height: 48px;
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(7, 193, 96, 0.08);
         transition: all 0.2s ease;
 
-        &:focus-within {
-            border-color: #07c160;
-            box-shadow: 0 2px 12px rgba(7, 193, 96, 0.15);
-            transform: translateY(-1px);
+        &:active {
+            transform: scale(0.92);
+            background-color: rgba(7, 193, 96, 0.15);
         }
-    }
 
-    .input-tools {
-        display: flex;
-        align-items: center;
-        margin-right: 8px;
-        gap: 12px;
-
-        .tool-item {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .button-icon {
             width: 24px;
             height: 24px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-
-            &:active {
-                transform: scale(0.9);
-            }
-
-            .tool-icon {
-                width: 20px;
-                height: 20px;
-                opacity: 0.6;
-                transition: opacity 0.2s ease;
-                color: #666;
-            }
-
-            .tool-text {
-                position: absolute;
-                bottom: -20px;
-                left: 50%;
-                transform: translateX(-50%);
-                white-space: nowrap;
-                font-size: 10px;
-                color: #07c160;
-                background: rgba(255, 255, 255, 0.9);
-                padding: 2px 6px;
-                border-radius: 10px;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            }
-
-            &:active .tool-icon {
-                opacity: 1;
-            }
+            opacity: 0.7;
         }
     }
 
+    /* 文本输入区域 */
     .input-text-container {
         flex: 1;
         position: relative;
-        min-height: 24px;
-        max-height: 90px;
-        overflow: hidden;
+        padding: 3px 12px;
         display: flex;
         align-items: center;
+        width: 100%;
+        min-height: 48px;
+        height: 54px;
+        /* 固定高度，与三按钮模式保持一致 */
+        box-sizing: border-box;
+    }
+
+    .input-close-button {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 8px;
+        position: relative;
+        /* 添加相对定位 */
+        top: 1px;
+        /* 稍微下移以与文本垂直对齐 */
+
+        .close-icon {
+            font-size: 20px;
+            color: #999;
+            font-weight: bold;
+            line-height: 1;
+            padding-bottom: 3px;
+            /* 确保叉号垂直居中 */
+        }
     }
 
     .message-input {
-        width: 100%;
+        flex: 1;
         border: none;
         outline: none;
         font-size: 15px;
-        line-height: 20px;
-        padding: 2px 0;
-        min-height: 20px;
+        line-height: 24px;
+        min-height: 24px;
         max-height: 90px;
         resize: none;
         background: transparent;
@@ -555,9 +569,13 @@
         word-wrap: break-word;
         overflow-wrap: break-word;
         color: #333;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        vertical-align: top;
-        text-align: left;
+        padding: 3px 0;
+        margin: 0 8px;
+        vertical-align: middle;
+        position: relative;
+        /* 添加相对定位 */
+        top: 1px;
+        /* 稍微下移以与叉号垂直对齐 */
 
         &::-webkit-scrollbar {
             width: 0;
@@ -565,11 +583,41 @@
         }
     }
 
-    .input-placeholder {
-        color: #999;
-        font-size: 15px;
-        line-height: 20px;
+    .send-button {
+        padding: 6px 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 18px;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 1px;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        transition: all 0.2s ease;
+
+        &:active {
+            transform: scale(0.95);
+            box-shadow: 0 1px 4px rgba(102, 126, 234, 0.2);
+        }
     }
+}
+
+.input-placeholder {
+    color: #999;
+    font-size: 15px;
+    line-height: 20px;
+}
+
+// 文本输入框内部布局优化
+.input-text-container .message-input {
+    margin-right: 0; // 去除右侧外边距
+    padding-right: 80px; // 为发送按钮预留空间
+}
+
+.input-text-container .send-button {
+    position: absolute; // 脱离文档流，绝对定位
+    right: 12px; // 距离容器右侧
+    top: 50%; // 垂直居中
+    transform: translateY(-50%);
 }
 
 /* 用户信息弹窗 */
@@ -731,24 +779,18 @@
             border-radius: 18px;
         }
 
-        .input-tools {
-            margin-right: 6px;
-            gap: 4px;
-
-            .tool-item {
-                width: 26px;
-                height: 26px;
-
-                .tool-icon {
-                    width: 14px;
-                    height: 14px;
-                }
-            }
+        .input-buttons {
+            height: 46px;
+            /* 小屏幕下的高度 */
+            padding: 2px 0;
         }
 
         .input-text-container {
-            min-height: 20px;
+            min-height: 40px;
+            height: 46px;
+            /* 小屏幕下的高度，与三按钮模式保持一致 */
             max-height: 70px;
+            padding: 2px 8px;
         }
 
         .message-input {
@@ -805,17 +847,26 @@
             }
         }
 
+        .input-buttons {
+            height: 58px;
+            /* 大屏幕下的高度 */
+            padding: 5px 0;
+        }
+
         .input-text-container {
-            min-height: 24px;
+            min-height: 40px;
+            padding: 4px 12px;
+            height: 58px;
+            /* 大屏幕下的高度，与三按钮模式保持一致 */
             max-height: 90px;
         }
 
         .message-input {
             font-size: 16px;
-            line-height: 22px;
-            min-height: 22px;
+            line-height: 24px;
+            min-height: 24px;
             max-height: 90px;
-            padding: 2px 0;
+            padding: 3px 0;
         }
 
         .input-placeholder {

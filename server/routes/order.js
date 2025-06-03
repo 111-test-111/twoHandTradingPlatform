@@ -279,7 +279,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
 
-        if (!['accepted', 'rejected', 'completed', 'cancelled'].includes(status)) {
+        if (!['accepted', 'rejected', 'completed', 'cancelled', 'paid'].includes(status)) {
             return res.status(400).json({
                 success: false,
                 message: '无效的订单状态'
@@ -301,9 +301,12 @@ router.put('/:id/status', verifyToken, async (req, res) => {
         if (status === 'accepted' || status === 'rejected') {
             // 只有卖家可以接受或拒绝订单
             hasPermission = order.sellerId === req.user.id;
+        } else if (status === 'paid') {
+            // 只有买家可以确认付款
+            hasPermission = order.buyerId === req.user.id;
         } else if (status === 'completed') {
-            // 买家和卖家都可以确认完成
-            hasPermission = order.buyerId === req.user.id || order.sellerId === req.user.id;
+            // 只有卖家可以确认收款完成（从paid状态到completed）
+            hasPermission = order.sellerId === req.user.id;
         } else if (status === 'cancelled') {
             // 买家可以取消订单
             hasPermission = order.buyerId === req.user.id;
@@ -324,6 +327,21 @@ router.put('/:id/status', verifyToken, async (req, res) => {
             });
         }
 
+        // 额外的状态流转验证
+        if (status === 'completed' && order.status !== 'paid') {
+            return res.status(400).json({
+                success: false,
+                message: '只有已付款的订单才能确认完成'
+            });
+        }
+
+        if (status === 'paid' && order.status !== 'accepted') {
+            return res.status(400).json({
+                success: false,
+                message: '只有已确认的订单才能进行付款'
+            });
+        }
+
         // 更新订单状态
         const updatedOrder = await orderModel.updateOrderStatus(id, status, req.user.id);
 
@@ -337,7 +355,9 @@ router.put('/:id/status', verifyToken, async (req, res) => {
                 const userModel = new User();
                 await userModel.updateCreditScore(order.buyerId, 2, 'success');
                 await userModel.updateCreditScore(order.sellerId, 2, 'success');
-                await userModel.incrementCounter(order.buyerId, 'buy');
+
+                // 将商品加入买家的已购买列表
+                await userModel.associateProduct(order.buyerId, order.productId, 'purchase');
             } else if (status === 'rejected' || status === 'cancelled') {
                 // 订单被拒绝或取消时，将商品状态恢复为可用
                 await productModel.updateStatus(order.productId, 'available');
@@ -351,7 +371,8 @@ router.put('/:id/status', verifyToken, async (req, res) => {
             success: true,
             message: `订单${status === 'accepted' ? '已接受' :
                 status === 'rejected' ? '已拒绝' :
-                    status === 'completed' ? '已完成' : '已取消'}`,
+                    status === 'paid' ? '付款已确认' :
+                        status === 'completed' ? '已完成' : '已取消'}`,
             data: updatedOrder
         });
 
@@ -404,8 +425,8 @@ router.delete('/:id', verifyToken, async (req, res) => {
         }
 
         // 仅允许已取消或已拒绝的订单删除
-        if (!['cancelled', 'rejected'].includes(order.status)) {
-            return res.status(400).json({ success: false, message: '只有已取消或已拒绝的订单才能删除' });
+        if (!['cancelled', 'rejected', 'completed'].includes(order.status)) {
+            return res.status(400).json({ success: false, message: '只有已取消、已拒绝或已完成的订单才能删除' });
         }
 
         // 权限验证：买家或卖家，确定用户类型

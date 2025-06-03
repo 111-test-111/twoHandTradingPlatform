@@ -16,12 +16,12 @@
   </view>
 
   <!-- 消息列表 -->
-  <scroll-view class="message-list" 
+  <scroll-view id="messageList" class="message-list" 
                scroll-y="true" 
-               scroll-top="{{scrollTop}}"
                scroll-into-view="{{scrollIntoView}}"
                enhanced="true"
                show-scrollbar="false"
+               style="padding-bottom: calc(120px + {{inputBottom}}px);"
                bindscroll="onMessageListScroll">
     
     <!-- 加载历史消息提示 -->
@@ -30,7 +30,7 @@
     </view>
 
     <!-- 消息项 -->
-    <view wx:for="{{messages}}" wx:key="id" class="message-item" id="msg-{{item.id}}">
+    <view wx:for="{{messages}}" wx:key="key" class="message-item" id="msg-{{item.id}}">
       
       <!-- 时间分隔线 -->
       <view wx:if="{{item.showTime}}" class="time-divider">
@@ -57,7 +57,9 @@
                      lazy-load="{{true}}"
                      show-menu-by-longpress="{{true}}"
                      bindtap="previewImage"
-                     data-url="{{item.imageUrl}}"/>
+                     bindload="onImageLoad"
+                     data-id="{{item.id}}"
+                     data-url="{{item.serverImageUrl || item.imageUrl}}"/>
             </view>
             <!-- 语音消息 -->
             <view wx:elif="{{item.type === 'audio'}}" class="message-voice-wrapper {{item.isPlaying ? 'playing' : ''}}" bindtap="playVoice" data-id="{{item.id}}" data-url="{{item.audioUrl}}">
@@ -90,7 +92,9 @@
                      lazy-load="{{true}}"
                      show-menu-by-longpress="{{true}}"
                      bindtap="previewImage"
-                     data-url="{{item.imageUrl}}"/>
+                     bindload="onImageLoad"
+                     data-id="{{item.id}}"
+                     data-url="{{item.serverImageUrl || item.imageUrl}}"/>
             </view>
             <!-- 语音消息 -->
             <view wx:elif="{{item.type === 'audio'}}" class="message-voice-wrapper {{item.isPlaying ? 'playing' : ''}}" bindtap="playVoice" data-id="{{item.id}}" data-url="{{item.audioUrl}}">
@@ -122,39 +126,44 @@
   </scroll-view>
 
   <!-- 输入区域 -->
-  <view class="input-container">
+  <view class="input-container" style="bottom: {{inputBottom}}px; transition: bottom {{keyboardAnimationDuration || 300}}ms cubic-bezier(0.16, 0.68, 0.43, 0.99);">
     <view class="input-section">
-      <view class="input-wrapper">
-        <!-- 左侧功能按钮 -->
-        <view class="input-tools">
-          <view class="tool-item" catchtap="selectImage">
-            <image class="tool-icon" src="/assets/icons/image.svg" mode="aspectFit"/>
+      <!-- 新的三按钮设计 -->
+      <view class="input-wrapper {{showTextInput ? 'with-input' : ''}}">
+        <!-- 三个功能按钮 -->
+        <view class="input-buttons" wx:if="{{!showTextInput}}">
+          <view class="input-button" bindtap="showTextInputBox">
+            <image class="button-icon" src="/assets/icons/text.svg" mode="aspectFit"/>
           </view>
-          <view class="tool-item" catchtap="selectAudio">
-            <image class="tool-icon" src="/assets/icons/microphone.svg" mode="aspectFit"/>
-            <text wx:if="{{isRecording}}" class="tool-text">松开结束</text>
+          <view class="input-button" bindtap="selectAudio">
+            <image class="button-icon" src="/assets/icons/microphone.svg" mode="aspectFit"/>
+          </view>
+          <view class="input-button" bindtap="selectImage">
+            <image class="button-icon" src="/assets/icons/image.svg" mode="aspectFit"/>
           </view>
         </view>
         
-        <!-- 输入框容器 -->
-        <view class="input-text-container">
+        <!-- 文本输入框 - 仅在点击文本按钮后显示 -->
+        <view class="input-text-container" wx:if="{{showTextInput}}">
+          <view class="input-close-button" bindtap="hideTextInputBox">
+            <text class="close-icon">×</text>
+          </view>
           <textarea class="message-input" 
                     placeholder="输入消息..." 
                     placeholder-class="input-placeholder"
                     value="{{inputText}}"
                     bindinput="onInputChange"
-                    bindfocus="onInputFocus"
-                    bindblur="onInputBlur"
                     focus="{{inputFocus}}"
-                    adjust-position="{{true}}"
+                    adjust-position="{{false}}"
+                    cursor-spacing="20"
                     auto-height="{{true}}"
                     maxlength="500"
                     confirm-type="send"
-                    cursor-spacing="8"
                     cursor="{{cursorPosition}}"
                     bindconfirm="sendMessage"
                     show-confirm-bar="{{false}}"
                     disable-default-padding="{{true}}"/>
+          <view class="send-button" bindtap="sendMessage">发送</view>
         </view>
       </view>
     </view>

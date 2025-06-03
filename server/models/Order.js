@@ -28,10 +28,11 @@ class Order extends BaseModel {
             payAmount: orderData.payAmount || 0,
             buyerMessage: orderData.buyerMessage || '',
             // 订单状态
-            status: 'pending', // pending, accepted, rejected, completed, cancelled
+            status: 'pending', // pending, accepted, paid, rejected, completed, cancelled
             paymentStatus: 'unpaid', // unpaid, paid, refunded
             // 时间记录
             acceptedAt: null,
+            paidAt: null,
             completedAt: null,
             cancelledAt: null,
             // 软删除字段
@@ -85,6 +86,9 @@ class Order extends BaseModel {
             case 'accepted':
                 updateData.acceptedAt = now;
                 break;
+            case 'paid':
+                updateData.paidAt = now;
+                break;
             case 'completed':
                 updateData.completedAt = now;
                 break;
@@ -113,6 +117,7 @@ class Order extends BaseModel {
             total: orders.length,
             pending: orders.filter(o => o.status === 'pending').length,
             accepted: orders.filter(o => o.status === 'accepted').length,
+            paid: orders.filter(o => o.status === 'paid').length,
             completed: orders.filter(o => o.status === 'completed').length,
             cancelled: orders.filter(o => o.status === 'cancelled' || o.status === 'rejected').length,
             totalAmount: orders
@@ -127,12 +132,12 @@ class Order extends BaseModel {
     async hasActivOrder(productId, excludeOrderId = null) {
         const activeOrders = await this.findWhere({
             productId,
-            status: { $in: ['pending', 'accepted'] }
+            status: { $in: ['pending', 'accepted', 'paid'] }
         });
 
         // 文件系统版本的简化逻辑
         const filtered = activeOrders.filter(order =>
-            ['pending', 'accepted'].includes(order.status) &&
+            ['pending', 'accepted', 'paid'].includes(order.status) &&
             (excludeOrderId ? order.id !== excludeOrderId : true)
         );
 

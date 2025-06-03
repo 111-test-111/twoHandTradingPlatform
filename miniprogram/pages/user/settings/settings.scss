@@ -341,9 +341,11 @@
         transform: translateX(-100%) translateY(-100%) rotate(30deg);
         opacity: 0;
     }
+
     50% {
         opacity: 0.3;
     }
+
     100% {
         transform: translateX(100%) translateY(100%) rotate(30deg);
         opacity: 0;
@@ -377,10 +379,12 @@
     font-size: 28rpx;
     color: #666;
     margin-right: 8rpx;
-    max-width: 200rpx;
+    max-width: 400rpx;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
 }
 
 .setting-value.incomplete {

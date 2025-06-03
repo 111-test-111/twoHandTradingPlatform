@@ -11,8 +11,8 @@
     <view class="top-section">
       <!-- 买家/卖家模式切换 -->
       <view class="mode-toggle">
-        <view class="{{isBuyerMode ? 'active' : ''}}" bindtap="toggleMode">我的购买</view>
-        <view class="{{!isBuyerMode ? 'active' : ''}}" bindtap="toggleMode">我的出售</view>
+        <view class="{{isBuyerMode ? 'active' : ''}}" bindtap="toggleMode">🛒 我的购买</view>
+        <view class="{{!isBuyerMode ? 'active' : ''}}" bindtap="toggleMode">💰 我的出售</view>
       </view>
       
       <!-- 状态标签页 -->
@@ -59,42 +59,60 @@
           
           <!-- 订单主内容 -->
           <view class="order-main" bindtap="goToOrderDetail" data-id="{{item.id}}">
-            <!-- 商品信息 -->
+            <!-- 商品信息表格 -->
             <view class="order-product">
               <image 
                 class="product-image" 
                 src="{{item.product.images[0] || '/assets/images/placeholder.png'}}" 
                 mode="aspectFill"></image>
+              
               <view class="product-details">
-                <text class="product-title">{{item.product.title}}</text>
-                <view class="product-meta">
-                  <text class="product-price">¥{{item.product.price}}</text>
-                </view>
-                
-                <!-- 交易方信息 -->
-                <view class="party-info">
-                  <text class="party-label">{{isBuyerMode ? '卖家' : '买家'}}:</text>
-                  <text class="party-name">{{isBuyerMode ? (item.seller.nickname || '未知用户') : (item.buyerName || item.buyer.nickname || '未知用户')}}</text>
+                <view class="product-info-table">
+                  <view class="product-info-row">
+                    <text class="product-info-label">商品名称</text>
+                    <text class="product-info-value product-title">{{item.product.title}}</text>
+                  </view>
+                  
+                  <view class="product-info-row">
+                    <text class="product-info-label">价格</text>
+                    <text class="product-info-value product-price">¥{{item.product.price}}</text>
+                  </view>
+                  
+                  <view class="product-info-row">
+                    <text class="product-info-label">{{isBuyerMode ? '卖家' : '买家'}}</text>
+                    <view class="product-info-value">
+                      <view class="party-info">
+                        <text class="party-name">{{isBuyerMode ? (item.seller.nickname || '未知用户') : (item.buyerName || item.buyer.nickname || '未知用户')}}</text>
+                      </view>
+                    </view>
+                  </view>
+                  
+                  <view class="product-info-row">
+                    <text class="product-info-label">订单金额</text>
+                    <text class="product-info-value product-price">¥{{item.payAmount || item.product.price}}</text>
+                  </view>
                 </view>
               </view>
             </view>
             
             <!-- 订单时间 -->
             <view class="order-time">
-              <text>{{formatTime(item.createdAt)}}</text>
+              <text>📅 {{formatTime(item.createdAt)}}</text>
             </view>
           </view>
           
           <!-- 订单底部操作区 -->
           <view class="order-footer">
-            <text class="order-total">订单金额: ¥{{item.payAmount || item.product.price}}</text>
             <view class="order-actions">
-              <view class="action-btn view-btn" bindtap="goToOrderDetail" data-id="{{item.id}}">查看详情</view>
-              <!-- 注意: 只使用catchtap避免事件冒泡 -->
-              <view wx:if="{{item.status === 'cancelled' || item.status === 'rejected'}}" 
+              <view class="action-btn view-btn" bindtap="goToOrderDetail" data-id="{{item.id}}">📋 查看详情</view>
+              <!-- 买家取消、卖家拒绝 -->
+              <view wx:if="{{isBuyerMode && item.status === 'pending'}}" catchtap="cancelOrder" data-id="{{item.id}}" class="action-btn cancel-btn">❌ 取消订单</view>
+              <view wx:if="{{!isBuyerMode && item.status === 'pending'}}" catchtap="rejectOrder" data-id="{{item.id}}" class="action-btn reject-btn">🚫 拒绝订单</view>
+              <!-- 取消后或拒绝后以及已完成的订单可删除 -->
+              <view wx:if="{{item.status === 'cancelled' || item.status === 'rejected' || item.status === 'completed'}}" 
                   catchtap="deleteOrder" 
                   data-id="{{item.id}}" 
-                  class="action-btn delete-btn">删除</view>
+                  class="action-btn delete-btn">🗑️ 删除</view>
             </view>
           </view>
         </view>

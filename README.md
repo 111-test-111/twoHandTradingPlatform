@@ -20,25 +20,7 @@ nodejs（后期接入 Python）
 ##### 设置步骤
 
 1. 在项目根目录创建或编辑`.env.local`文件
-2. 添加以下配置：
-
-```
-# 服务器基础配置
-SERVER_IP=你的服务器IP地址
-SERVER_PORT=3000
-
-# 环境配置
-NODE_ENV=development
-
-# 微信小程序配置
-WECHAT_APP_ID=你的小程序appID
-WECHAT_APP_SECRET=你的小程序appSecret
-
-# 部署环境
-# production - 生产环境
-# development - 开发环境
-DEPLOY_ENV=development
-```
+2. 配置模板在`.env.example`中
 
 ##### 配置说明
 

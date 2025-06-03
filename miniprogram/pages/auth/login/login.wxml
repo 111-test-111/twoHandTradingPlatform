@@ -12,7 +12,7 @@
     <!-- Logo和标题 -->
     <view class="header">
       <view class="logo">
-        <image class="logo-image" src="/assets/images/placeholder.png" mode="aspectFit"/>
+        <image class="logo-image" src="/assets/images/loginlogo.jpg" mode="aspectFill"/>
       </view>
       <view class="title">校园二手交易</view>
       <view class="subtitle">让闲置物品重新焕发价值</view>

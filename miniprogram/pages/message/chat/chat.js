@@ -15,6 +15,10 @@ Page({
         inputFocus: false,
         sending: false,
         cursorPosition: -1, // 光标位置，-1表示自动定位到末尾
+        showTextInput: false, // 是否显示文本输入框
+        keyboardHeight: 0, // 键盘高度
+        inputBottom: 0, // 输入框底部距离
+        keyboardAnimationDuration: 0, // 键盘动画时长
 
         // 录音相关
         showRecordModal: false, // 是否显示录音模态框
@@ -48,9 +52,10 @@ Page({
         isPreviewingImage: false,
 
         // 手动刷新相关
-        isRefreshing: false
+        isRefreshing: false,
 
-        // 其他需要的字段保留
+        // 键盘和滚动相关
+        scrollAnimation: null, // 滚动动画对象
     },
 
     onLoad(options) {
@@ -81,21 +86,53 @@ Page({
         wx.setNavigationBarTitle({
             title: '聊天'
         });
+
+        // 初始化录音管理器
+        this.recorderManager = this.initRecorderManager();
+
+        // 监听键盘高度变化
+        wx.onKeyboardHeightChange(res => {
+            console.log('键盘高度变化:', res.height, res.duration);
+
+            // 记录键盘变化前的滚动位置
+            const currentScrollTop = this.data.scrollTop || 0;
+
+            this.setData({
+                keyboardHeight: res.height,
+                inputBottom: res.height,
+                // 设置较短的键盘动画时长以加快响应
+                keyboardAnimationDuration: res.duration ? Math.min(res.duration, 300) : 300
+            });
+
+            // 键盘弹出时，从当前位置滚动
+            if (res.height > 0) {
+                // 取消之前的滚动动画
+                if (this.scrollAnimation) {
+                    clearInterval(this.scrollAnimation);
+                }
+
+                // 平滑滚动到对应位置，使用较短的动画时间
+                this.smoothScrollBy(res.height * 0.7); // 只滚动部分距离，避免过度滚动
+            }
+        });
     },
 
     onShow() {
         console.log('页面显示');
 
-        // 如果禁用了自动滚动（例如从图片预览返回），需要恢复之前的滚动位置
         if (this.data.disableAutoScroll) {
             console.log('恢复滚动位置:', this.data.lastScrollPosition);
 
-            // 使用scrollTop恢复滚动位置
-            this.setData({
-                scrollTop: this.data.lastScrollPosition,
-                // 延迟200ms后允许自动滚动，避免连续操作冲突
-                disableAutoScroll: false
-            });
+            // 使用组件方法恢复滚动位置
+            const comp = this.selectComponent('#messageList');
+            if (comp && comp.scrollTo) {
+                comp.scrollTo({
+                    scrollTop: this.data.lastScrollPosition,
+                    duration: this.data.keyboardAnimationDuration || 300
+                });
+            }
+            // 解除禁用自动滚动状态
+            this.setData({ disableAutoScroll: false });
         } else {
             // 正常情况下滚动到底部
             this.scrollToBottom();
@@ -140,12 +177,22 @@ Page({
 
         // 清理录音管理器
         if (this.recorderManager) {
-            this.recorderManager.stop();
+            // 仅在正在录音时停止录音管理器，避免未开始录音时报错
+            if (this.data.isRecording) {
+                try {
+                    this.recorderManager.stop();
+                } catch (e) {
+                    console.error('停止录音管理器失败:', e);
+                }
+            }
             this.recorderManager.offStart();
             this.recorderManager.offStop();
             this.recorderManager.offError();
             this.recorderManager = null;
         }
+
+        // 取消键盘高度监听
+        wx.offKeyboardHeightChange();
     },
 
     // 初始化聊天
@@ -348,6 +395,7 @@ Page({
 
             return {
                 id: msg.id,
+                key: msg.id, // 用于列表渲染的稳定key
                 type: msg.type || 'text', // 消息类型：text、image、audio
                 content: msg.content,
                 imageUrl: imageUrl, // 处理后的图片URL
@@ -391,11 +439,43 @@ Page({
         }
     },
 
-    // 输入框变化
+    // 显示文本输入框
+    showTextInputBox() {
+        // 先记录当前滚动位置
+        const currentScrollTop = this.data.scrollTop || 0;
+
+        // 同时显示输入框UI并设置焦点，加快响应速度
+        this.setData({
+            showTextInput: true,
+            inputFocus: true
+        });
+
+        // 提前模拟向上滚动，配合键盘高度变化
+        // 通常键盘高度大约是屏幕的一半，先提前滚动一部分，键盘弹出时会继续滚动
+        const preScrollDistance = 150; // 预滚动距离
+        this.smoothScrollBy(preScrollDistance);
+    },
+
+    // 隐藏文本输入框
+    hideTextInputBox() {
+        // 先失去焦点，收起键盘
+        this.setData({
+            inputFocus: false
+        });
+
+        // 延时设置以确保键盘先收起，但缩短等待时间
+        setTimeout(() => {
+            this.setData({
+                showTextInput: false,
+                inputBottom: 0 // 重置输入框底部距离
+            });
+        }, 150); // 使用更短的时间，提高响应速度
+    },
+
+    // 输入文本变化
     onInputChange(e) {
         this.setData({
-            inputText: e.detail.value,
-            cursorPosition: -1 // 重置光标位置
+            inputText: e.detail.value
         });
     },
 
@@ -410,46 +490,59 @@ Page({
 
     // 预览图片
     previewImage(e) {
-        console.log('开始预览图片:', e.currentTarget.dataset.url);
-        const { url } = e.currentTarget.dataset;
+        console.log('预览图片:', e);
+        const url = e.currentTarget.dataset.url;
 
-        // 获取所有图片消息的URL
-        const imageUrls = this.data.messages
-            .filter(msg => msg.type === 'image' && msg.imageUrl)
-            .map(msg => msg.imageUrl);
+        // 设置状态，防止从预览回来时自动滚动
+        this.setData({
+            isPreviewingImage: true,
+            disableAutoScroll: true,
+            lastScrollPosition: this.data.scrollTop
+        });
 
-        console.log('所有图片URL:', imageUrls);
+        // 获取当前图片消息
+        const currentMessage = this.data.messages.find(msg =>
+            (msg.type === 'image' && (msg.imageUrl === url || msg.serverImageUrl === url))
+        );
 
-        // 预览前禁用自动滚动
-        this.setData({ disableAutoScroll: true });
+        // 获取所有图片消息
+        const imageMessages = this.data.messages.filter(msg => msg.type === 'image');
+        const imageUrls = imageMessages.map(msg => msg.serverImageUrl || msg.imageUrl);
+
+        // 当前图片索引
+        const current = currentMessage ? imageUrls.indexOf(currentMessage.serverImageUrl || currentMessage.imageUrl) : 0;
+
+        console.log('预览图片列表:', imageUrls, '当前图片索引:', current);
 
         wx.previewImage({
             current: url,
-            urls: imageUrls,
-            success: () => {
-                console.log('预览图片成功');
-            },
-            fail: (err) => {
-                console.error('预览图片失败:', err);
-                wx.showToast({
-                    title: '无法预览图片',
-                    icon: 'none'
-                });
-            }
+            urls: imageUrls
         });
+    },
+
+    // 图片加载完成后滚动到底部，解决高图滚动偏差
+    onImageLoad(e) {
+        const id = e.currentTarget.dataset.id;
+        const msgs = this.data.messages;
+        const last = msgs[msgs.length - 1];
+        if (last && last.id === id) {
+            this.scrollToBottom();
+        }
     },
 
     // 滚动到底部
     scrollToBottom() {
-        // 如果禁用了自动滚动，则不执行
-        if (this.data.disableAutoScroll) {
-            console.log('已禁用自动滚动，不执行滚动到底部');
-            return;
+        if (this.data.disableAutoScroll) return;
+        // 使用组件方法平滑滚动到底部
+        const comp = this.selectComponent('#messageList');
+        if (comp && comp.scrollTo) {
+            comp.scrollTo({
+                scrollTop: Number.MAX_SAFE_INTEGER,
+                duration: this.data.keyboardAnimationDuration || 300
+            });
+        } else {
+            this.setData({ scrollIntoView: 'bottom' });
         }
-
-        this.setData({
-            scrollIntoView: 'bottom'
-        });
     },
 
     // 输入框聚焦
@@ -467,10 +560,8 @@ Page({
             return;
         }
 
-        // 聚焦时延迟滚动到底部
-        setTimeout(() => {
-            this.scrollToBottom();
-        }, 300);
+        // 立即执行滚动，不再使用延时
+        this.smoothScrollBy(100);
     },
 
     // 输入框失焦
@@ -485,10 +576,8 @@ Page({
             return;
         }
 
-        // 失焦时滚动到底部
-        setTimeout(() => {
-            this.scrollToBottom();
-        }, 100);
+        // 失焦时滚动回原位
+        // 这里不需要额外处理，因为键盘收起会触发 onKeyboardHeightChange
     },
 
     // 选择表情包（占位方法）
@@ -571,13 +660,8 @@ Page({
         // 重置拖拽状态
         this.setData({ isDragOutside: false });
 
-        // 设置长按计时器，长按500ms后开始录音
-        this.longPressTimer = setTimeout(() => {
-            if (!this.shouldCancelRecord && this.touchStartTime) {
-                console.log('长按500ms，开始录音');
-                this.startRecording();
-            }
-        }, 500);
+        // 立即开始录音
+        this.startRecording();
     },
 
     // 触摸移动 - 检测是否拖出模态框区域
@@ -626,11 +710,7 @@ Page({
         const touchDuration = Date.now() - this.touchStartTime;
         console.log('触摸持续时间:', touchDuration, 'ms');
 
-        // 清除长按计时器
-        if (this.longPressTimer) {
-            clearTimeout(this.longPressTimer);
-            this.longPressTimer = null;
-        }
+        // 长按定时不再使用
 
         if (this.data.isRecording) {
             // 正在录音状态
@@ -656,16 +736,16 @@ Page({
         } else {
             // 未在录音状态
             if (touchDuration < 500) {
-                // 短按（小于500ms），不做任何反应，只重置状态
+                // 短按（小于500ms），重置模态框状态
                 console.log('短按，重置模态框状态');
-                this.setData({ 
+                this.setData({
                     isDragOutside: false,
                     recordingTime: 0
                 });
             } else {
-                // 长按但录音未开始或开始失败，关闭模态框
-                console.log('长按但录音未开始，关闭模态框');
-                this.setData({ showRecordModal: false });
+                // 长按达到但录音未能启动，取消录音并清理所有状态
+                console.log('长按但录音未开始或启动失败，取消录音');
+                this.cancelRecording();
             }
         }
 
@@ -715,8 +795,13 @@ Page({
 
         // 如果正在录音，则停止
         if (this.recorderManager && this.data.isRecording) {
-            this.recorderManager.stop();
-
+            try {
+                this.recorderManager.stop();
+            } catch (e) {
+                console.error('停止录音失败:', e);
+                // 重新初始化录音管理器
+                this.recorderManager = this.initRecorderManager();
+            }
             // 清除录音文件，标记为取消状态
             this.tempRecordFilePath = '';
             this.recordingCancelled = true;
@@ -732,19 +817,11 @@ Page({
             isDragOutside: false,
             recordingTime: 0
         });
-
-        // 重置录音相关变量
-        this.recordingCancelled = false;
-        this.tempRecordFilePath = '';
     },
 
     // 完成录音
     finishRecording() {
         console.log('完成录音');
-        this.recordingCancelled = false; // 标记为正常完成
-
-        // 重置拖拽状态
-        this.setData({ isDragOutside: false });
 
         if (this.recorderManager && this.data.isRecording) {
             this.recorderManager.stop();
@@ -754,10 +831,6 @@ Page({
     // 停止录音但不发送消息（用于录音时长过短的情况）
     stopRecordingWithoutSending() {
         console.log('停止录音但不发送');
-        this.recordingCancelled = true; // 标记为取消状态，不发送消息
-
-        // 重置拖拽状态，但保持模态框打开
-        this.setData({ isDragOutside: false });
 
         if (this.recorderManager && this.data.isRecording) {
             this.recorderManager.stop();
@@ -795,23 +868,13 @@ Page({
 
     // 执行录音逻辑
     doStartRecording() {
-        // 如果已经有录音管理器，先清理
-        if (this.recorderManager) {
-            console.log('清理之前的录音管理器');
-            this.recorderManager.stop();
-            // 移除所有事件监听器
-            this.recorderManager.offStart();
-            this.recorderManager.offStop();
-            this.recorderManager.offError();
-            this.recorderManager = null;
-        }
-
         // 重置录音相关状态
-        this.recordingCancelled = false;
-        this.tempRecordFilePath = '';
+        // recordingCancelled 和 tempRecordFilePath 将在 onStop 事件中重置
 
-        // 获取全局唯一的录音管理器
-        const recorderManager = wx.getRecorderManager();
+        // 初始化或获取录音管理器
+        if (!this.recorderManager) {
+            this.recorderManager = this.initRecorderManager();
+        }
 
         // 录音参数
         const options = {
@@ -822,6 +885,47 @@ Page({
             format: 'mp3', // 音频格式
             frameSize: 50 // 指定帧大小，单位KB
         };
+
+        try {
+            // 开始录音
+            this.recorderManager.start(options);
+        } catch (error) {
+            console.error('开始录音失败:', error);
+            wx.showToast({
+                title: '录音启动失败，请重试',
+                icon: 'none'
+            });
+
+            // 重新初始化录音管理器
+            this.recorderManager = this.initRecorderManager();
+
+            // 重置录音状态
+            this.setData({
+                isRecording: false,
+                recordingTime: 0
+            });
+        }
+    },
+
+    // 初始化录音管理器
+    initRecorderManager() {
+        // 如果已经有录音管理器，先清理
+        if (this.recorderManager) {
+            console.log('清理之前的录音管理器');
+            try {
+                this.recorderManager.stop();
+            } catch (e) {
+                console.error('停止录音管理器失败:', e);
+            }
+            // 移除所有事件监听器
+            this.recorderManager.offStart();
+            this.recorderManager.offStop();
+            this.recorderManager.offError();
+            this.recorderManager = null;
+        }
+
+        // 获取全局唯一的录音管理器
+        const recorderManager = wx.getRecorderManager();
 
         // 录音开始事件
         recorderManager.onStart(() => {
@@ -841,7 +945,8 @@ Page({
             this.clearRecordingTimer();
             this.setData({
                 isRecording: false,
-                showRecordModal: false
+                // 保持模态框打开，显示错误
+                recordingTime: 0
             });
 
             wx.showToast({
@@ -855,20 +960,20 @@ Page({
             console.log('录音完成:', res, '是否取消:', this.recordingCancelled);
             this.clearRecordingTimer();
 
-            // 检查是否是因为录音时长过短而停止的录音
-            const isShortRecording = this.recordingCancelled && this.data.recordingTime < 1;
-
-            this.setData({
-                isRecording: false,
-                showRecordModal: isShortRecording ? true : false // 录音过短时保持模态框打开
-            });
-
-            // 如果是取消录音，直接返回不处理
+            // 如果是取消录音，直接返回并保持模态框关闭
             if (this.recordingCancelled) {
                 console.log('录音已取消，不发送');
                 this.recordingCancelled = false; // 重置状态
                 return;
             }
+
+            // 检查是否是因录音时长过短而停止的录音
+            const isShortRecording = this.data.recordingTime < 1;
+
+            this.setData({
+                isRecording: false,
+                showRecordModal: isShortRecording ? true : false
+            });
 
             // 保存临时录音文件路径
             this.tempRecordFilePath = res.tempFilePath;
@@ -891,11 +996,7 @@ Page({
             this.sendVoiceMessage(this.tempRecordFilePath, this.data.recordingTime);
         });
 
-        // 开始录音
-        recorderManager.start(options);
-
-        // 设置全局引用
-        this.recorderManager = recorderManager;
+        return recorderManager;
     },
 
     // 开始录音计时器
@@ -927,7 +1028,19 @@ Page({
     // 停止录音
     stopRecording() {
         if (this.recorderManager && this.data.isRecording) {
-            this.recorderManager.stop();
+            try {
+                this.recorderManager.stop();
+            } catch (e) {
+                console.error('停止录音失败:', e);
+                // 重新初始化录音管理器
+                this.recorderManager = this.initRecorderManager();
+
+                // 重置录音状态
+                this.setData({
+                    isRecording: false,
+                    recordingTime: 0
+                });
+            }
         }
     },
 
@@ -945,6 +1058,7 @@ Page({
         const now = new Date();
         const tempMessage = {
             id: tempId,
+            key: tempId, // 列表渲染key
             type: 'audio',
             content: '', // 语音消息content为空
             audioUrl: tempFilePath,
@@ -1146,9 +1260,12 @@ Page({
         const now = new Date();
         const tempMessage = {
             id: tempId,
+            key: tempId, // 列表渲染key
             type: 'image',
             content: '', // 图片消息content为空
-            imageUrl: tempFilePath,
+            imageUrl: tempFilePath, // 本地临时路径
+            tempImageUrl: tempFilePath, // 保存临时路径
+            serverImageUrl: '', // 存储服务器URL
             imageDimensions: imgInfo, // 存储图片尺寸信息
             isOwn: true,
             time: '发送中',
@@ -1186,13 +1303,13 @@ Page({
             });
 
             if (res.success) {
-                // 更新消息状态
+                // 更新消息状态，但保留本地图片URL避免闪烁
                 const updatedMessages = this.data.messages.map(msg => {
                     if (msg.id === tempId) {
                         return {
                             ...msg,
                             id: res.data.id,
-                            imageUrl: uploadRes.data.url, // 使用完整的服务器URL
+                            serverImageUrl: uploadRes.data.url, // 存储服务器URL，但不直接替换imageUrl
                             time: this.formatMessageTime(now),
                             status: 'sent'
                         };
@@ -1410,91 +1527,126 @@ Page({
 
     // 发送文本消息
     async sendMessage() {
+        // 如果已经在发送中，则忽略
+        if (this.data.sending) {
+            return;
+        }
+
+        // 获取输入文本
         const content = this.data.inputText.trim();
-        if (!content || this.data.sending) return;
 
-        // 防止重复发送
-        this.setData({
-            sending: true,
-            inputText: '',
-            cursorPosition: 0 // 清空后重置光标位置
-        });
-
-        // 生成临时消息ID
-        const tempId = `temp_${Date.now()}`;
-        const now = new Date();
-        const tempMessage = {
-            id: tempId,
-            type: 'text',
-            content,
-            isOwn: true,
-            time: '发送中',
-            timeStr: this.formatTimeString(now),
-            showTime: this.shouldShowTime(now),
-            status: 'sending'
-        };
-
-        // 立即显示消息
-        const newMessages = [...this.data.messages, tempMessage];
-        this.setData({ messages: newMessages });
-
-        // 滚动到底部
-        setTimeout(() => {
-            this.scrollToBottom();
-        }, 50);
+        // 如果没有内容，则不发送
+        if (!content) {
+            return;
+        }
 
         try {
-            const res = await MessageAPI.sendMessage({
-                conversationId: this.data.conversationId,
-                type: 'text',
-                content,
-                receiverId: this.data.otherUserId
+            this.setData({
+                sending: true
             });
 
-            if (res.success) {
-                // 更新消息状态
-                const updatedMessages = this.data.messages.map(msg => {
-                    if (msg.id === tempId) {
-                        return {
-                            ...msg,
-                            id: res.data.id,
-                            time: this.formatMessageTime(now),
-                            status: 'sent'
-                        };
-                    }
-                    return msg;
-                });
+            // 构建消息对象
+            const messageObj = {
+                conversationId: this.data.conversationId,
+                receiverId: this.data.otherUserId,
+                content: content,
+                type: 'text'
+            };
 
+            // 构建本地消息
+            const localMsg = {
+                id: 'local_' + Date.now(),
+                senderId: this.data.currentUser.id,
+                receiverId: this.data.otherUserId,
+                content: content,
+                type: 'text',
+                createdAt: new Date().toISOString(),
+                status: 'sending',
+                isOwn: true
+            };
+
+            // 处理本地消息
+            const processedMsg = this.processMessages([localMsg])[0];
+
+            // 添加到消息列表
+            const updatedMessages = [...this.data.messages, processedMsg];
+
+            this.setData({
+                messages: updatedMessages,
+                inputText: '', // 清空输入框
+            });
+
+            // 先收起键盘
+            wx.hideKeyboard();
+
+            // 延时隐藏输入框，确保键盘已收起
+            setTimeout(() => {
                 this.setData({
-                    messages: updatedMessages,
-                    lastActiveTime: now
+                    showTextInput: false,
+                    inputBottom: 0
                 });
+            }, 100);
+
+            // 滚动到底部
+            this.scrollToBottom();
+
+            // 发送消息到服务器
+            const res = await MessageAPI.sendMessage(messageObj);
+
+            if (res.success) {
+                // 更新本地消息状态
+                const serverMsg = res.data;
+                const index = this.data.messages.findIndex(m => m.id === localMsg.id);
+
+                if (index !== -1) {
+                    const messages = [...this.data.messages];
+                    messages[index] = {
+                        ...messages[index],
+                        id: serverMsg.id,
+                        status: 'sent',
+                        time: this.formatMessageTime(new Date(serverMsg.createdAt))
+                    };
+
+                    this.setData({ messages });
+                }
             } else {
                 throw new Error(res.message || '发送失败');
             }
         } catch (error) {
             console.error('发送消息失败:', error);
 
-            // 更新消息状态为失败
-            const updatedMessages = this.data.messages.map(msg => {
-                if (msg.id === tempId) {
-                    return {
-                        ...msg,
-                        time: '发送失败',
-                        status: 'failed'
-                    };
-                }
-                return msg;
-            });
+            // 更新失败的消息状态
+            const index = this.data.messages.findIndex(m => m.status === 'sending');
 
-            this.setData({ messages: updatedMessages });
+            if (index !== -1) {
+                const messages = [...this.data.messages];
+                messages[index] = {
+                    ...messages[index],
+                    status: 'failed'
+                };
+
+                this.setData({ messages });
+            }
 
             wx.showToast({
-                title: '发送失败',
-                icon: 'error'
+                title: error.message || '发送失败',
+                icon: 'none'
             });
         } finally {
             this.setData({ sending: false });
         }
-    }
+    },
+
+    // 平滑滚动指定距离（向上滚动）
+    smoothScrollBy(distance) {
+        if (this.data.disableAutoScroll) return;
+        // 使用组件方法平滑滚动指定距离
+        const comp = this.selectComponent('#messageList');
+        if (comp && comp.scrollTo) {
+            const start = this.data.lastScrollPosition || 0;
+            const target = start + distance;
+            // 减少动画时间以加快响应速度
+            comp.scrollTo({ scrollTop: target, duration: 200 });
+        }
+    },
 }); 

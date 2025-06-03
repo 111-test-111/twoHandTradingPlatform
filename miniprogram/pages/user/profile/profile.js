@@ -1,4 +1,4 @@
-const { UserAPI, ProductAPI, OrderAPI } = require('../../../utils/api');
+const { UserAPI, ProductAPI, OrderAPI, apiService } = require('../../../utils/api');
 const app = getApp();
 
 Page({
@@ -33,11 +33,19 @@ Page({
         productPage: 1,
         productHasMore: true,
 
+        // 不同标签的商品列表
+        publishedProducts: [],
+        boughtProducts: [],
+        favoriteProducts: [],
+
         // 当前选中的标签
         activeTab: 'published', // published, bought, favorites
 
         // 订单相关
         recentOrders: [],
+
+        // 已购买商品数量
+        boughtProductsCount: 0,
 
         // UI状态
         refreshing: false,
@@ -161,8 +169,16 @@ Page({
         }
     },
 
-    // 下拉刷新
+    // 下拉刷新（原生页面级别，现在不再使用）
     onPullDownRefresh() {
+        console.log('原生下拉刷新（已停用）');
+        // 由于使用scroll-view的refresher，这里不再处理
+        wx.stopPullDownRefresh();
+    },
+
+    // scroll-view的下拉刷新
+    onScrollRefresh() {
+        console.log('执行scroll-view下拉刷新');
         this.refreshData();
     },
 
@@ -218,7 +234,8 @@ Page({
             const promises = [
                 this.loadUserStats(),
                 this.loadMyProducts(),
-                this.loadRecentOrders()
+                this.loadRecentOrders(),
+                this.loadBoughtProductsCount()
             ];
 
             await Promise.all(promises);
@@ -234,7 +251,7 @@ Page({
                 loading: false,
                 dataLoadedAt: Date.now() // 更新数据加载时间戳
             });
-            wx.stopPullDownRefresh();
+            // 注意：wx.stopPullDownRefresh() 现在在refreshData中统一处理
         }
     },
 
@@ -267,10 +284,12 @@ Page({
             });
 
             if (res.success) {
-                const newProducts = res.data.records || [];
+                const rawProducts = res.data.records || [];
+                // 过滤已删除的商品
+                const filteredProducts = rawProducts.filter(product => product.status !== 'removed');
 
                 // 确保每个商品都有图片
-                const processedProducts = newProducts.map(product => {
+                const processedProducts = filteredProducts.map(product => {
                     if (!product.images || product.images.length === 0) {
                         product.images = ['/assets/images/placeholder.png'];
                     }
@@ -286,8 +305,10 @@ Page({
 
                 this.setData({
                     myProducts: myProducts,
+                    publishedProducts: myProducts,
                     productPage: page + 1,
-                    productHasMore: newProducts.length >= 10
+                    // 是否还有更多数据，基于原始数据长度判断
+                    productHasMore: rawProducts.length >= 10
                 });
 
                 console.log('已加载商品数量:', myProducts.length);
@@ -338,11 +359,39 @@ Page({
 
     // 刷新数据
     async refreshData() {
-        this.setData({ refreshing: true });
-        // 手动刷新时强制重新加载，重置时间戳
-        this.setData({ dataLoadedAt: 0 });
-        await this.loadUserData();
-        this.setData({ refreshing: false });
+        try {
+            this.setData({ refreshing: true });
+
+            // 手动刷新时强制重新加载，重置时间戳
+            this.setData({ dataLoadedAt: 0 });
+
+            // 显示刷新提示
+            wx.showToast({
+                title: '刷新中...',
+                icon: 'loading',
+                duration: 1000
+            });
+
+            await this.loadUserData();
+
+            // 刷新成功提示
+            wx.showToast({
+                title: '刷新成功',
+                icon: 'success',
+                duration: 1000
+            });
+
+        } catch (error) {
+            console.error('刷新数据失败:', error);
+            wx.showToast({
+                title: '刷新失败',
+                icon: 'none',
+                duration: 2000
+            });
+        } finally {
+            this.setData({ refreshing: false });
+            // scroll-view的refresher会自动停止，不需要手动调用stopPullDownRefresh
+        }
     },
 
     // 加载更多商品
@@ -354,20 +403,36 @@ Page({
     // 切换标签
     switchTab(e) {
         const tab = e.currentTarget.dataset.tab;
+
         this.setData({
             activeTab: tab
         });
 
-        // 根据标签加载不同数据
+        // 根据标签显示对应的商品列表并加载数据
         switch (tab) {
             case 'published':
-                this.loadMyProducts(true);
+                this.setData({
+                    myProducts: this.data.publishedProducts
+                });
+                if (this.data.publishedProducts.length === 0) {
+                    this.loadMyProducts(true);
+                }
                 break;
             case 'bought':
-                this.loadBoughtProducts();
+                this.setData({
+                    myProducts: this.data.boughtProducts
+                });
+                if (this.data.boughtProducts.length === 0) {
+                    this.loadBoughtProducts();
+                }
                 break;
             case 'favorites':
-                this.loadFavoriteProducts();
+                this.setData({
+                    myProducts: this.data.favoriteProducts
+                });
+                if (this.data.favoriteProducts.length === 0) {
+                    this.loadFavoriteProducts();
+                }
                 break;
         }
     },
@@ -375,24 +440,97 @@ Page({
     // 加载已购买的商品
     async loadBoughtProducts() {
         try {
+            this.setData({ productLoading: true });
+
             const res = await OrderAPI.getBuyerOrders({ page: 1, limit: 20 });
             if (res.success) {
+                console.log('加载已购买商品原始数据:', res.data.orders);
+
+                // 只显示已完成的订单
+                const completedOrders = res.data.orders.filter(order => order.status === 'completed');
+                console.log('已完成的订单:', completedOrders);
+
+                // 将订单转换为商品格式以便在商品列表中显示
+                const boughtProducts = completedOrders.map(order => {
+                    // 处理图片数组，确保至少有一张图片
+                    let images = order.productImages || [];
+                    if (!Array.isArray(images)) {
+                        images = [];
+                    }
+                    if (images.length === 0) {
+                        images = ['/assets/images/placeholder.png'];
+                    }
+
+                    return {
+                        id: order.productId || order.id,
+                        title: order.productTitle || '商品标题',
+                        price: order.productPrice || order.payAmount || 0,
+                        images: apiService.processImageUrls(images),
+                        viewCount: 0,
+                        createdAt: this.formatOrderTime(order.completedAt || order.createdAt),
+                        status: 'sold', // 已购买的商品状态为已售出
+                        campus: order.buyerCampus || '',
+                        orderId: order.id // 保存订单ID以便查看订单详情
+                    };
+                });
+
                 this.setData({
-                    myProducts: res.data.orders || []
+                    myProducts: boughtProducts,
+                    boughtProducts: boughtProducts,
+                    boughtProductsCount: boughtProducts.length
                 });
             }
         } catch (error) {
             console.error('加载已购买商品失败:', error);
+        } finally {
+            this.setData({ productLoading: false });
+        }
+    },
+
+    // 格式化订单时间
+    formatOrderTime(timeStr) {
+        if (!timeStr) return '';
+        const date = new Date(timeStr);
+        return `${date.getMonth() + 1}月${date.getDate()}日`;
+    },
+
+    // 加载已购买商品数量
+    async loadBoughtProductsCount() {
+        try {
+            const res = await OrderAPI.getBuyerOrders({ page: 1, limit: 100 });
+            if (res.success) {
+                // 只统计已完成的订单数量
+                const completedOrdersCount = res.data.orders.filter(order => order.status === 'completed').length;
+                this.setData({
+                    boughtProductsCount: completedOrdersCount
+                });
+            }
+        } catch (error) {
+            console.error('加载已购买商品数量失败:', error);
         }
     },
 
     // 加载收藏的商品
     async loadFavoriteProducts() {
-        // 这里需要根据你的后端API实现
-        wx.showToast({
-            title: '功能开发中',
-            icon: 'none'
-        });
+        try {
+            this.setData({ productLoading: true });
+
+            // 这里需要根据你的后端API实现
+            wx.showToast({
+                title: '功能开发中',
+                icon: 'none'
+            });
+
+            // 临时设置空数组
+            this.setData({
+                myProducts: [],
+                favoriteProducts: []
+            });
+        } catch (error) {
+            console.error('加载收藏商品失败:', error);
+        } finally {
+            this.setData({ productLoading: false });
+        }
     },
 
     // 跳转到设置页面
@@ -412,9 +550,18 @@ Page({
     // 查看商品详情
     viewProduct(e) {
         const productId = e.currentTarget.dataset.id;
-        wx.navigateTo({
-            url: `/pages/product/detail/detail?id=${productId}`
-        });
+        const productData = this.data.myProducts.find(p => p.id === productId);
+
+        // 如果是已购买商品且有订单ID，跳转到订单详情页
+        if (this.data.activeTab === 'bought' && productData && productData.orderId) {
+            wx.navigateTo({
+                url: `/pages/order/detail/detail?id=${productData.orderId}&action=view`
+            });
+        } else {
+            wx.navigateTo({
+                url: `/pages/product/detail/detail?id=${productId}`
+            });
+        }
     },
 
     // 编辑商品
@@ -436,22 +583,41 @@ Page({
             success: async (res) => {
                 if (res.confirm) {
                     try {
+                        wx.showLoading({
+                            title: '删除中...',
+                            mask: true
+                        });
+
                         const result = await ProductAPI.delete(productId);
                         if (result.success) {
                             wx.showToast({
                                 title: '删除成功',
                                 icon: 'success'
                             });
-                            // 刷新商品列表
-                            this.loadMyProducts(true);
-                            this.loadUserStats();
+
+                            // 立即从当前显示的列表中移除该商品
+                            const updatedMyProducts = this.data.myProducts.filter(product => product.id !== productId);
+                            const updatedPublishedProducts = this.data.publishedProducts.filter(product => product.id !== productId);
+
+                            // 更新页面数据
+                            this.setData({
+                                myProducts: updatedMyProducts,
+                                publishedProducts: updatedPublishedProducts
+                            });
+
+                            // 重新加载用户统计信息以更新商品数量
+                            await this.loadUserStats();
+                        } else {
+                            throw new Error(result.message || '删除失败');
                         }
                     } catch (error) {
                         console.error('删除商品失败:', error);
                         wx.showToast({
-                            title: '删除失败',
+                            title: error.message || '删除失败',
                             icon: 'none'
                         });
+                    } finally {
+                        wx.hideLoading();
                     }
                 }
             }

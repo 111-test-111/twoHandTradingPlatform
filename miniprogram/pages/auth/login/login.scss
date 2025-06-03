@@ -98,8 +98,11 @@
     height: 150rpx;
     border-radius: 40rpx;
     background: rgba(255, 255, 255, 0.95);
-    padding: 20rpx;
+    padding: 0;
     box-shadow: 0 15rpx 40rpx rgba(0, 0, 0, 0.25);
+    object-fit: cover;
+    overflow: hidden;
+    transform: scale(1.05);
 }
 
 .title {

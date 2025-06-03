@@ -17,7 +17,7 @@ Page({
         statusFilters: {
             0: '', // 全部
             1: 'pending', // 待确认
-            2: 'accepted', // 进行中
+            2: 'accepted,paid', // 进行中
             3: 'completed', // 已完成
             4: 'cancelled,rejected' // 已取消、已拒绝
         },
@@ -324,11 +324,11 @@ Page({
 
     // 删除订单
     deleteOrder(e) {
-        // 防止事件冒泡，避免触发goToOrderDetail
-        e.stopPropagation();
-
         const orderId = e.currentTarget.dataset.id;
         console.log('点击删除订单按钮, ID:', orderId);
+
+        // 标记本地软删除，设置刷新标志
+        wx.setStorageSync('orderListNeedRefresh', true);
 
         if (!orderId) {
             console.error('删除订单失败: 没有获取到订单ID');
@@ -337,7 +337,7 @@ Page({
 
         wx.showModal({
             title: '删除订单',
-            content: '确定要删除此订单吗？删除后对方仍可查看该订单',
+            content: '确定要删除此订单吗？删除后对方仍可查看该订单，只有双方均删除后才会永久删除',
             confirmText: '删除',
             cancelText: '取消',
             success: async (res) => {
@@ -357,9 +357,6 @@ Page({
                             const { buyerOrders, sellerOrders, isBuyerMode } = this.data;
                             const newBuyerOrders = buyerOrders.filter(o => o.id !== orderId);
                             const newSellerOrders = sellerOrders.filter(o => o.id !== orderId);
-
-                            console.log('删除前:', isBuyerMode ? buyerOrders.length : sellerOrders.length,
-                                '删除后:', isBuyerMode ? newBuyerOrders.length : newSellerOrders.length);
 
                             this.setData({
                                 buyerOrders: newBuyerOrders,
@@ -387,6 +384,72 @@ Page({
             },
             fail: (error) => {
                 console.error('显示删除确认框失败:', error);
+            }
+        });
+    },
+
+    // 买家取消订单
+    cancelOrder(e) {
+        const orderId = e.currentTarget.dataset.id;
+        if (!orderId) return;
+        wx.showModal({
+            title: '取消订单',
+            content: '确定要取消此订单吗？',
+            confirmText: '确定',
+            cancelText: '取消',
+            success: async (res) => {
+                if (res.confirm) {
+                    wx.showLoading({ title: '取消中...' });
+                    try {
+                        const result = await OrderAPI.updateStatus(orderId, 'cancelled');
+                        wx.hideLoading();
+                        if (result.success) {
+                            wx.showToast({ title: '已取消', icon: 'success' });
+                            // 刷新列表
+                            wx.setStorageSync('orderListNeedRefresh', true);
+                            this.setData({ page: 1, buyerOrders: [], sellerOrders: [], displayOrders: [], hasMore: true });
+                            this.loadOrders();
+                        } else {
+                            wx.showToast({ title: result.message || '取消失败', icon: 'none' });
+                        }
+                    } catch (err) {
+                        wx.hideLoading();
+                        wx.showToast({ title: '网络错误，取消失败', icon: 'none' });
+                    }
+                }
+            }
+        });
+    },
+
+    // 卖家拒绝订单
+    rejectOrder(e) {
+        const orderId = e.currentTarget.dataset.id;
+        if (!orderId) return;
+        wx.showModal({
+            title: '拒绝订单',
+            content: '确定要拒绝此订单吗？',
+            confirmText: '确定',
+            cancelText: '取消',
+            success: async (res) => {
+                if (res.confirm) {
+                    wx.showLoading({ title: '拒绝中...' });
+                    try {
+                        const result = await OrderAPI.updateStatus(orderId, 'rejected');
+                        wx.hideLoading();
+                        if (result.success) {
+                            wx.showToast({ title: '已拒绝', icon: 'success' });
+                            // 刷新列表
+                            wx.setStorageSync('orderListNeedRefresh', true);
+                            this.setData({ page: 1, buyerOrders: [], sellerOrders: [], displayOrders: [], hasMore: true });
+                            this.loadOrders();
+                        } else {
+                            wx.showToast({ title: result.message || '拒绝失败', icon: 'none' });
+                        }
+                    } catch (err) {
+                        wx.hideLoading();
+                        wx.showToast({ title: '网络错误，拒绝失败', icon: 'none' });
+                    }
+                }
             }
         });
     },
@@ -422,6 +485,7 @@ Page({
         const statusMap = {
             'pending': '待确认',
             'accepted': '已确认',
+            'paid': '待收款确认',
             'completed': '已完成',
             'cancelled': '已取消',
             'rejected': '已拒绝'
