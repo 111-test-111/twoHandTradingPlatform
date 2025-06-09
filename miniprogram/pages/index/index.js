@@ -99,7 +99,7 @@ Page({
             if (categoriesRes.success) {
                 // 添加"全部"选项
                 const allCategories = [
-                    { name: '全部', value: '', count: categoriesRes.data.total || 0 },
+                    { name: '全部', value: '', count: categoriesRes.data.available || 0 },
                     ...categoriesRes.data.categories
                 ];
                 this.setData({ categories: allCategories });
@@ -325,7 +325,7 @@ Page({
             return;
         }
 
-        wx.navigateTo({
+        wx.switchTab({
             url: '/pages/product/publish/publish'
         });
     }

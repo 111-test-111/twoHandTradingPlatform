@@ -209,25 +209,25 @@ class Product extends BaseModel {
     // 获取商品统计信息
     async getStatistics() {
         const allProducts = await this.findAll();
+        const availableProducts = allProducts.filter(p => p.status === 'available');
 
         const stats = {
             total: allProducts.length,
-            available: allProducts.filter(p => p.status === 'available').length,
+            available: availableProducts.length,
             sold: allProducts.filter(p => p.status === 'sold').length,
             reserved: allProducts.filter(p => p.status === 'reserved').length,
             categories: {},
             avgPrice: 0
         };
 
-        // 分类统计
-        allProducts.forEach(product => {
+        // 分类统计 - 只统计在售商品(available状态)
+        availableProducts.forEach(product => {
             if (product.category) {
                 stats.categories[product.category] = (stats.categories[product.category] || 0) + 1;
             }
         });
 
         // 平均价格
-        const availableProducts = allProducts.filter(p => p.status === 'available');
         if (availableProducts.length > 0) {
             const totalPrice = availableProducts.reduce((sum, p) => sum + p.price, 0);
             stats.avgPrice = Math.round(totalPrice / availableProducts.length * 100) / 100;

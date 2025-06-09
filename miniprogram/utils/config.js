@@ -7,7 +7,7 @@ const SERVER_CONFIG = {
     // 生产环境IP
     PRODUCTION: '49.235.51.115',
     // 开发环境IP
-    DEVELOPMENT: '192.168.10.34',
+    DEVELOPMENT: '192.168.31.144',
     // 服务器端口
     PORT: 3000
 };

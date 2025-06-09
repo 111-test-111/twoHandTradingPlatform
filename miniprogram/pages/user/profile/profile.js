@@ -634,7 +634,7 @@ Page({
 
     // 查看所有订单
     viewAllOrders() {
-        wx.navigateTo({
+        wx.switchTab({
             url: '/pages/order/list/list'
         });
     },

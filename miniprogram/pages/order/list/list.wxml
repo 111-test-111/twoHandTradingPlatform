@@ -1,3 +1,21 @@
+<wxs module="statusUtils">
+function getStatusText(status) {
+  var statusMap = {
+    'pending': '待确认',
+    'accepted': '已确认',
+    'paid': '待收款确认',
+    'completed': '已完成',
+    'cancelled': '已取消',
+    'rejected': '已拒绝'
+  };
+  return statusMap[status] || '未知状态';
+}
+
+module.exports = {
+  getStatusText: getStatusText
+};
+</wxs>
+
 <view class="container">
   <!-- 加载中状态 -->
   <view class="loading-container" wx:if="{{loading}}">
@@ -52,19 +70,29 @@
           wx:key="id" 
           class="order-card">
           
-          <!-- 订单状态标签 -->
-          <view class="order-status-badge {{item.status}}">
-            {{getStatusText(item.status)}}
+          <!-- 状态遮罩 -->
+          <view class="status-mask {{item.status}}">
+            <text class="mask-text">{{statusUtils.getStatusText(item.status)}}</text>
           </view>
-          
+
           <!-- 订单主内容 -->
           <view class="order-main" bindtap="goToOrderDetail" data-id="{{item.id}}">
             <!-- 商品信息表格 -->
             <view class="order-product">
-              <image 
-                class="product-image" 
-                src="{{item.product.images[0] || '/assets/images/placeholder.png'}}" 
-                mode="aspectFill"></image>
+              <view class="product-image-container">
+                <image 
+                  class="product-image" 
+                  src="{{item.product.images[0] || '/assets/images/placeholder.png'}}" 
+                  mode="aspectFill"></image>
+                
+                <!-- 删除按钮 (仅在已取消、已拒绝或已完成状态显示) -->
+                <view wx:if="{{item.status === 'cancelled' || item.status === 'rejected' || item.status === 'completed'}}" 
+                     class="delete-btn-image" 
+                     catchtap="deleteOrder" 
+                     data-id="{{item.id}}">
+                  <text class="delete-icon">🗑️</text>
+                </view>
+              </view>
               
               <view class="product-details">
                 <view class="product-info-table">
@@ -93,26 +121,6 @@
                   </view>
                 </view>
               </view>
-            </view>
-            
-            <!-- 订单时间 -->
-            <view class="order-time">
-              <text>📅 {{formatTime(item.createdAt)}}</text>
-            </view>
-          </view>
-          
-          <!-- 订单底部操作区 -->
-          <view class="order-footer">
-            <view class="order-actions">
-              <view class="action-btn view-btn" bindtap="goToOrderDetail" data-id="{{item.id}}">📋 查看详情</view>
-              <!-- 买家取消、卖家拒绝 -->
-              <view wx:if="{{isBuyerMode && item.status === 'pending'}}" catchtap="cancelOrder" data-id="{{item.id}}" class="action-btn cancel-btn">❌ 取消订单</view>
-              <view wx:if="{{!isBuyerMode && item.status === 'pending'}}" catchtap="rejectOrder" data-id="{{item.id}}" class="action-btn reject-btn">🚫 拒绝订单</view>
-              <!-- 取消后或拒绝后以及已完成的订单可删除 -->
-              <view wx:if="{{item.status === 'cancelled' || item.status === 'rejected' || item.status === 'completed'}}" 
-                  catchtap="deleteOrder" 
-                  data-id="{{item.id}}" 
-                  class="action-btn delete-btn">🗑️ 删除</view>
             </view>
           </view>
         </view>
